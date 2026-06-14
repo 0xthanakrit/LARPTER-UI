@@ -8,4 +8,3 @@ local Window = Larpter:CreateDemo()
 Window:Info("Loaded from GitHub", {
     source = LIBRARY_URL,
 })
-
