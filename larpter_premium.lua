@@ -127,37 +127,68 @@ local function round(value, decimals)
     return math.floor(value * factor + 0.5) / factor
 end
 
-local function printLoadBar(enabled, progress, message, force)
-    if enabled == false then
+local function makeConsoleState(option)
+    return {
+        Mode = option == false and "silent" or (option == "verbose" and "verbose" or (option == "compact" and "compact" or "line")),
+        LastBucket = nil,
+        LastMessage = nil,
+        LastLength = 0,
+        HasLineConsole = type(rconsoleprint) == "function",
+    }
+end
+
+local function renderProgressLine(progress, message)
+    local width = 24
+    local filled = math.floor(progress * width + 0.5)
+    local empty = width - filled
+    local percent = math.floor(progress * 100 + 0.5)
+    local bar = string.rep("=", filled) .. string.rep("-", empty)
+
+    return string.format("[LARPTER] [%s] %3d%%  %s", bar, percent, tostring(message or "Loading"))
+end
+
+local function writeConsoleProgress(state, progress, message, force)
+    if state == false or state == nil then
         return
     end
 
     progress = clamp(tonumber(progress) or 0, 0, 1)
     message = tostring(message or "Loading")
 
-    if type(enabled) == "table" then
-        local state = enabled
+    if state.Mode == "silent" then
+        return
+    end
 
-        if state.Mode == "silent" then
+    if state.Mode == "line" then
+        local line = renderProgressLine(progress, message)
+
+        if state.HasLineConsole then
+            local padding = math.max(0, (state.LastLength or 0) - #line)
+            rconsoleprint("\r" .. line .. string.rep(" ", padding))
+            state.LastLength = #line
+
+            if progress >= 1 or force == "done" then
+                rconsoleprint("\n")
+            end
+        elseif progress >= 1 or force then
+            print(line)
+        end
+
+        return
+    end
+
+    if state.Mode == "compact" and not force then
+        local bucket = math.floor(progress * 4)
+
+        if bucket == state.LastBucket and message == state.LastMessage then
             return
         end
 
-        if state.Mode ~= "verbose" and not force then
-            local bucket = math.floor(progress * 4)
-
-            if bucket == state.LastBucket and message == state.LastMessage then
-                return
-            end
-
-            state.LastBucket = bucket
-        end
-
-        state.LastMessage = message
+        state.LastBucket = bucket
     end
 
-    local percent = math.floor(progress * 100 + 0.5)
-
-    print(string.format("[LARPTER] %3d%%  %s", percent, message))
+    state.LastMessage = message
+    print(renderProgressLine(progress, message))
 end
 
 local function asString(value)
@@ -1139,7 +1170,7 @@ function Window:_setLoading(progress, message)
     end
 
     progress = clamp(progress or 0, 0, 1)
-    printLoadBar(self.ConsoleLoading, progress, message)
+    writeConsoleProgress(self.ConsoleLoading, progress, message)
 
     if message then
         self.LoadingStatus.Text = message
@@ -1821,11 +1852,7 @@ end
 
 local function buildWindow(config)
     config = config or {}
-    local consoleLoading = {
-        Mode = config.ConsoleLoading == false and "silent" or (config.ConsoleLoading == "verbose" and "verbose" or "compact"),
-        LastBucket = nil,
-        LastMessage = nil,
-    }
+    local consoleLoading = makeConsoleState(config.ConsoleLoading)
 
     local parent = getParent()
     assert(parent, "LARPTER Premium could not find a GUI parent")
@@ -2182,16 +2209,14 @@ function Larpter:CreateWindow(config)
     local state = getState()
     local active = state.ActiveWindow
     local preventDuplicate = config.PreventDuplicate ~= false
-    local consoleState = {
-        Mode = config.ConsoleLoading == false and "silent" or (config.ConsoleLoading == "verbose" and "verbose" or "compact"),
-    }
+    local consoleState = makeConsoleState(config.ConsoleLoading)
 
     if active and not active.Destroyed and active.Gui and active.Gui.Parent then
         if config.ForceReload == true then
-            printLoadBar(consoleState, 0.06, "Force reload", true)
+            writeConsoleProgress(consoleState, 0.06, "Force reload", true)
             active:Destroy()
         elseif preventDuplicate then
-            printLoadBar(consoleState, 1, "Already loaded", true)
+            writeConsoleProgress(consoleState, 1, "Already loaded", true)
             active.Root.Visible = true
 
             if active.Minimized then
