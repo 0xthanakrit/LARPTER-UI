@@ -28,22 +28,22 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Ink = Color3.fromRGB(28, 30, 35),
-        Ink2 = Color3.fromRGB(33, 36, 43),
-        Ink3 = Color3.fromRGB(40, 44, 53),
-        Panel = Color3.fromRGB(36, 39, 47),
-        Panel2 = Color3.fromRGB(43, 47, 58),
-        Panel3 = Color3.fromRGB(52, 58, 72),
-        Card = Color3.fromRGB(42, 46, 56),
-        CardHover = Color3.fromRGB(53, 60, 74),
-        Stroke = Color3.fromRGB(72, 82, 103),
+        Ink = Color3.fromRGB(36, 38, 44),
+        Ink2 = Color3.fromRGB(42, 45, 53),
+        Ink3 = Color3.fromRGB(49, 54, 65),
+        Panel = Color3.fromRGB(45, 49, 58),
+        Panel2 = Color3.fromRGB(54, 59, 70),
+        Panel3 = Color3.fromRGB(63, 70, 86),
+        Card = Color3.fromRGB(50, 55, 66),
+        CardHover = Color3.fromRGB(61, 69, 84),
+        Stroke = Color3.fromRGB(86, 98, 120),
         StrokeBright = Color3.fromRGB(75, 122, 195),
         Blue = Color3.fromRGB(56, 139, 255),
         Blue2 = Color3.fromRGB(132, 190, 255),
         Blue3 = Color3.fromRGB(32, 68, 125),
         Text = Color3.fromRGB(245, 248, 255),
-        Text2 = Color3.fromRGB(180, 190, 205),
-        Text3 = Color3.fromRGB(118, 130, 150),
+        Text2 = Color3.fromRGB(201, 211, 226),
+        Text3 = Color3.fromRGB(146, 158, 178),
         Red = Color3.fromRGB(255, 83, 112),
         Amber = Color3.fromRGB(255, 193, 93),
         Violet = Color3.fromRGB(137, 166, 255),
@@ -1148,6 +1148,11 @@ function Window:_setLoading(progress, message)
     tween(self.LoadingFill, { Size = UDim2.fromScale(progress, 1) }, Tokens.Motion.Base)
 end
 
+function Window:_bootStep(progress, message, delaySeconds)
+    self:_setLoading(progress, message)
+    task.wait(delaySeconds or 0.18)
+end
+
 function Window:_finishLoading()
     if self.Destroyed or not self.Loading then
         return
@@ -1730,6 +1735,11 @@ local function buildLoading(root)
     local cardStroke = stroke(Tokens.Color.StrokeBright, 0.12, 1)
     cardStroke.Parent = card
 
+    local cardScale = new("UIScale", {
+        Scale = 1,
+        Parent = card,
+    })
+
     local header = new("Frame", {
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 28),
@@ -1806,7 +1816,7 @@ local function buildLoading(root)
         ZIndex = 82,
     }))
 
-    return overlay, status, fill, spinner, fillGradient, cardStroke
+    return overlay, status, fill, spinner, fillGradient, cardStroke, cardScale
 end
 
 local function buildWindow(config)
@@ -1817,12 +1827,8 @@ local function buildWindow(config)
         LastMessage = nil,
     }
 
-    printLoadBar(consoleLoading, 0.02, "Booting " .. Larpter.Name, true)
-
     local parent = getParent()
     assert(parent, "LARPTER Premium could not find a GUI parent")
-
-    printLoadBar(consoleLoading, 0.08, "Creating interface")
 
     local gui = new("ScreenGui", {
         Name = config.Name or "LARPTERPremium",
@@ -1835,8 +1841,6 @@ local function buildWindow(config)
     local bin = Bin.new()
     local tabWidth = config.TabWidth or 188
     local size = config.Size or UDim2.fromOffset(800, 548)
-
-    printLoadBar(consoleLoading, 0.14, "Building shell")
 
     local root = new("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1853,8 +1857,8 @@ local function buildWindow(config)
         new("UIGradient", {
             Rotation = 90,
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(31, 34, 42)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 19, 23)),
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(54, 58, 70)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(36, 38, 44)),
             }),
         }),
     })
@@ -1992,7 +1996,7 @@ local function buildWindow(config)
     })
     notifications.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
-    local loading, loadingStatus, loadingFill, loadingSpinner, loadingGradient, loadingStroke = buildLoading(root)
+    local loading, loadingStatus, loadingFill, loadingSpinner, loadingGradient, loadingStroke, loadingCardScale = buildLoading(root)
 
     local window = setmetatable({
         Gui = gui,
@@ -2010,6 +2014,7 @@ local function buildWindow(config)
         LoadingSpinner = loadingSpinner,
         LoadingGradient = loadingGradient,
         LoadingStroke = loadingStroke,
+        LoadingCardScale = loadingCardScale,
         MinimizeButton = min,
         CloseButton = close,
         ActiveLabel = activeLabel,
@@ -2059,6 +2064,18 @@ local function buildWindow(config)
         end)
     end)
 
+    local cardBreath = TweenService:Create(
+        loadingCardScale,
+        TweenInfo.new(0.9, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+        { Scale = 1.025 }
+    )
+    cardBreath:Play()
+    bin:Add(function()
+        pcall(function()
+            cardBreath:Cancel()
+        end)
+    end)
+
     local spinConnection
     spinConnection = RunService.RenderStepped:Connect(function(deltaTime)
         if window.Destroyed or not window.Loading or not loadingSpinner.Parent then
@@ -2072,7 +2089,12 @@ local function buildWindow(config)
     end)
     bin:Add(spinConnection)
 
-    window:_setLoading(0.22, "Mounting shell")
+    local minBootTime = tonumber(config.MinBootTime) or 2
+    local bootStart = os.clock()
+
+    window:_bootStep(0.06, "Booting " .. Larpter.Name, 0.18)
+    window:_bootStep(0.18, "Creating interface", 0.2)
+    window:_bootStep(0.34, "Mounting shell", 0.2)
 
     local dragging = false
     local dragInput = nil
@@ -2133,13 +2155,22 @@ local function buildWindow(config)
         window:Destroy()
     end)
 
-    window:_setLoading(0.54, "Preparing logs")
+    window:_bootStep(0.54, "Preparing logs", 0.22)
     window:_buildLogTab()
-    window:_setLoading(0.78, "Binding components")
+    window:_bootStep(0.76, "Binding components", 0.2)
     window:Info("LARPTER Premium initialized", {
         version = Larpter.Version,
         maxLogs = window.MaxLogs,
     })
+    window:_bootStep(0.9, "Finalizing motion", 0.18)
+
+    local elapsed = os.clock() - bootStart
+    local remaining = minBootTime - elapsed
+
+    if remaining > 0 then
+        task.wait(remaining)
+    end
+
     window:_finishLoading()
 
     return window
