@@ -27,22 +27,22 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Ink = Color3.fromRGB(3, 4, 7),
-        Ink2 = Color3.fromRGB(6, 8, 13),
-        Ink3 = Color3.fromRGB(10, 13, 21),
-        Panel = Color3.fromRGB(12, 15, 23),
-        Panel2 = Color3.fromRGB(16, 20, 30),
-        Panel3 = Color3.fromRGB(22, 28, 41),
-        Card = Color3.fromRGB(13, 16, 25),
-        CardHover = Color3.fromRGB(20, 26, 39),
-        Stroke = Color3.fromRGB(36, 49, 76),
-        StrokeBright = Color3.fromRGB(62, 91, 145),
-        Blue = Color3.fromRGB(45, 132, 255),
-        Blue2 = Color3.fromRGB(122, 181, 255),
-        Blue3 = Color3.fromRGB(18, 52, 104),
-        Text = Color3.fromRGB(238, 244, 255),
-        Text2 = Color3.fromRGB(148, 162, 185),
-        Text3 = Color3.fromRGB(82, 96, 121),
+        Ink = Color3.fromRGB(18, 19, 23),
+        Ink2 = Color3.fromRGB(22, 24, 29),
+        Ink3 = Color3.fromRGB(27, 30, 37),
+        Panel = Color3.fromRGB(24, 26, 32),
+        Panel2 = Color3.fromRGB(30, 33, 41),
+        Panel3 = Color3.fromRGB(38, 42, 52),
+        Card = Color3.fromRGB(28, 31, 39),
+        CardHover = Color3.fromRGB(36, 41, 52),
+        Stroke = Color3.fromRGB(58, 65, 82),
+        StrokeBright = Color3.fromRGB(64, 105, 170),
+        Blue = Color3.fromRGB(56, 139, 255),
+        Blue2 = Color3.fromRGB(132, 190, 255),
+        Blue3 = Color3.fromRGB(32, 68, 125),
+        Text = Color3.fromRGB(245, 248, 255),
+        Text2 = Color3.fromRGB(180, 190, 205),
+        Text3 = Color3.fromRGB(118, 130, 150),
         Red = Color3.fromRGB(255, 83, 112),
         Amber = Color3.fromRGB(255, 193, 93),
         Violet = Color3.fromRGB(137, 166, 255),
@@ -124,6 +124,22 @@ local function round(value, decimals)
 
     local factor = 10 ^ decimals
     return math.floor(value * factor + 0.5) / factor
+end
+
+local function printLoadBar(enabled, progress, message)
+    if enabled == false then
+        return
+    end
+
+    progress = clamp(tonumber(progress) or 0, 0, 1)
+
+    local width = 22
+    local filled = math.floor(progress * width + 0.5)
+    local empty = width - filled
+    local percent = math.floor(progress * 100 + 0.5)
+    local bar = string.rep("#", filled) .. string.rep("-", empty)
+
+    print(string.format("[LARPTER Premium] [%s] %3d%%  %s", bar, percent, tostring(message or "Loading")))
 end
 
 local function asString(value)
@@ -1069,6 +1085,7 @@ function Window:_setLoading(progress, message)
     end
 
     progress = clamp(progress or 0, 0, 1)
+    printLoadBar(self.ConsoleLoading, progress, message)
 
     if message then
         self.LoadingStatus.Text = message
@@ -1091,7 +1108,10 @@ function Window:_finishLoading()
             return
         end
 
-        tween(self.Loading, { GroupTransparency = 1 }, Tokens.Motion.Base)
+        tween(self.Loading, {
+            BackgroundTransparency = 1,
+            GroupTransparency = 1,
+        }, Tokens.Motion.Base)
 
         task.delay(0.24, function()
             if self.Loading then
@@ -1693,9 +1713,14 @@ end
 
 local function buildWindow(config)
     config = config or {}
+    local consoleLoading = config.ConsoleLoading ~= false
+
+    printLoadBar(consoleLoading, 0.02, "Resolving GUI parent")
 
     local parent = getParent()
     assert(parent, "LARPTER Premium could not find a GUI parent")
+
+    printLoadBar(consoleLoading, 0.08, "Creating ScreenGui")
 
     local gui = new("ScreenGui", {
         Name = config.Name or "LARPTERPremium",
@@ -1708,6 +1733,8 @@ local function buildWindow(config)
     local bin = Bin.new()
     local tabWidth = config.TabWidth or 188
     local size = config.Size or UDim2.fromOffset(800, 548)
+
+    printLoadBar(consoleLoading, 0.14, "Building matte shell")
 
     local root = new("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1723,8 +1750,8 @@ local function buildWindow(config)
         new("UIGradient", {
             Rotation = 90,
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Tokens.Color.Ink3),
-                ColorSequenceKeypoint.new(1, Tokens.Color.Ink),
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(31, 34, 42)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 19, 23)),
             }),
         }),
     })
@@ -1887,6 +1914,7 @@ local function buildWindow(config)
         MinimizeKey = normalizeKeyCode(config.MinimizeKey, Enum.KeyCode.LeftControl),
         MaxLogs = tonumber(config.MaxLogs) or 250,
         AutoScrollLogs = true,
+        ConsoleLoading = consoleLoading,
         LogSearch = "",
         LogEntries = {},
         LogFilters = {},
@@ -1983,8 +2011,10 @@ function Larpter:CreateWindow(config)
 
     if active and not active.Destroyed and active.Gui and active.Gui.Parent then
         if config.ForceReload == true then
+            printLoadBar(config.ConsoleLoading ~= false, 0.06, "ForceReload requested")
             active:Destroy()
         elseif preventDuplicate then
+            printLoadBar(config.ConsoleLoading ~= false, 1, "Duplicate load blocked")
             active.Root.Visible = true
 
             if active.Minimized then
@@ -2040,12 +2070,14 @@ function Larpter:DestroyActive()
     return false
 end
 
-function Larpter:CreateDemo()
-    local window = self:CreateWindow({
+function Larpter:CreateDemo(config)
+    config = merge({
         Title = "LARPTER Premium",
         Subtitle = "React-style Roblox control surface",
         MaxLogs = 200,
-    })
+    }, config or {})
+
+    local window = self:CreateWindow(config)
 
     local dashboard = window:AddTab({ Title = "Dashboard" })
 
