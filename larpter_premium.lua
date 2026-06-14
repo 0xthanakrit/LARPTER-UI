@@ -22,21 +22,22 @@ local Services = setmetatable({}, {
 local Players = Services.Players
 local UserInputService = Services.UserInputService
 local TweenService = Services.TweenService
+local RunService = Services.RunService
 
 local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Ink = Color3.fromRGB(18, 19, 23),
-        Ink2 = Color3.fromRGB(22, 24, 29),
-        Ink3 = Color3.fromRGB(27, 30, 37),
-        Panel = Color3.fromRGB(24, 26, 32),
-        Panel2 = Color3.fromRGB(30, 33, 41),
-        Panel3 = Color3.fromRGB(38, 42, 52),
-        Card = Color3.fromRGB(28, 31, 39),
-        CardHover = Color3.fromRGB(36, 41, 52),
-        Stroke = Color3.fromRGB(58, 65, 82),
-        StrokeBright = Color3.fromRGB(64, 105, 170),
+        Ink = Color3.fromRGB(28, 30, 35),
+        Ink2 = Color3.fromRGB(33, 36, 43),
+        Ink3 = Color3.fromRGB(40, 44, 53),
+        Panel = Color3.fromRGB(36, 39, 47),
+        Panel2 = Color3.fromRGB(43, 47, 58),
+        Panel3 = Color3.fromRGB(52, 58, 72),
+        Card = Color3.fromRGB(42, 46, 56),
+        CardHover = Color3.fromRGB(53, 60, 74),
+        Stroke = Color3.fromRGB(72, 82, 103),
+        StrokeBright = Color3.fromRGB(75, 122, 195),
         Blue = Color3.fromRGB(56, 139, 255),
         Blue2 = Color3.fromRGB(132, 190, 255),
         Blue3 = Color3.fromRGB(32, 68, 125),
@@ -126,20 +127,37 @@ local function round(value, decimals)
     return math.floor(value * factor + 0.5) / factor
 end
 
-local function printLoadBar(enabled, progress, message)
+local function printLoadBar(enabled, progress, message, force)
     if enabled == false then
         return
     end
 
     progress = clamp(tonumber(progress) or 0, 0, 1)
+    message = tostring(message or "Loading")
 
-    local width = 22
-    local filled = math.floor(progress * width + 0.5)
-    local empty = width - filled
+    if type(enabled) == "table" then
+        local state = enabled
+
+        if state.Mode == "silent" then
+            return
+        end
+
+        if state.Mode ~= "verbose" and not force then
+            local bucket = math.floor(progress * 4)
+
+            if bucket == state.LastBucket and message == state.LastMessage then
+                return
+            end
+
+            state.LastBucket = bucket
+        end
+
+        state.LastMessage = message
+    end
+
     local percent = math.floor(progress * 100 + 0.5)
-    local bar = string.rep("#", filled) .. string.rep("-", empty)
 
-    print(string.format("[LARPTER Premium] [%s] %3d%%  %s", bar, percent, tostring(message or "Loading")))
+    print(string.format("[LARPTER] %3d%%  %s", percent, message))
 end
 
 local function asString(value)
@@ -267,12 +285,48 @@ local function makeText(parent, props)
 end
 
 local function makeButton(parent, props, children)
-    return new("TextButton", merge({
+    props = props or {}
+
+    local button = new("TextButton", merge({
         AutoButtonColor = false,
         Text = "",
         BorderSizePixel = 0,
         Parent = parent,
-    }, props or {}), children)
+    }, props), children)
+
+    if props.Animate ~= false then
+        local normalColor = props.BackgroundColor3
+        local hoverColor = props.HoverColor or Tokens.Color.CardHover
+        local pressColor = props.PressColor or Tokens.Color.Blue
+        local normalSize = props.Size
+        local normalPosition = props.Position
+
+        button.MouseEnter:Connect(function()
+            if normalColor then
+                tween(button, { BackgroundColor3 = hoverColor }, Tokens.Motion.Fast)
+            end
+        end)
+
+        button.MouseLeave:Connect(function()
+            if normalColor then
+                tween(button, { BackgroundColor3 = normalColor }, Tokens.Motion.Fast)
+            end
+        end)
+
+        button.MouseButton1Down:Connect(function()
+            if normalColor then
+                tween(button, { BackgroundColor3 = pressColor }, 0.08)
+            end
+        end)
+
+        button.MouseButton1Up:Connect(function()
+            if normalColor then
+                tween(button, { BackgroundColor3 = hoverColor }, 0.08)
+            end
+        end)
+    end
+
+    return button
 end
 
 local function makeScroll(parent)
@@ -1101,6 +1155,7 @@ function Window:_finishLoading()
 
     self:_setLoading(1, "Ready")
     tween(self.Scale, { Scale = 1 }, Tokens.Motion.Slow, Enum.EasingStyle.Back)
+    tween(self.Root, { Position = UDim2.fromScale(0.5, 0.5) }, Tokens.Motion.Slow, Enum.EasingStyle.Quint)
     tween(self.Root, { GroupTransparency = 0 }, Tokens.Motion.Slow)
 
     task.delay(0.28, function()
@@ -1647,7 +1702,8 @@ end
 
 local function buildLoading(root)
     local overlay = new("CanvasGroup", {
-        BackgroundColor3 = Tokens.Color.Ink,
+        BackgroundColor3 = Tokens.Color.Ink2,
+        BackgroundTransparency = 0.03,
         BorderSizePixel = 0,
         GroupTransparency = 0,
         Size = UDim2.fromScale(1, 1),
@@ -1667,15 +1723,54 @@ local function buildLoading(root)
         Parent = overlay,
     }, {
         corner(Tokens.Radius.Xl),
-        stroke(Tokens.Color.StrokeBright, 0.12, 1),
         padding(18, 16, 18, 16),
         list(Enum.FillDirection.Vertical, 9),
     })
 
-    makeText(card, merge(textProps("LARPTER PREMIUM", 16, Tokens.Color.Text, true), {
-        Size = UDim2.new(1, 0, 0, 22),
+    local cardStroke = stroke(Tokens.Color.StrokeBright, 0.12, 1)
+    cardStroke.Parent = card
+
+    local header = new("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 28),
         ZIndex = 82,
+        Parent = card,
+    })
+
+    makeText(header, merge(textProps("LARPTER PREMIUM", 16, Tokens.Color.Text, true), {
+        Size = UDim2.new(1, -42, 1, 0),
+        ZIndex = 83,
     }))
+
+    local spinner = new("Frame", {
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        Size = UDim2.fromOffset(28, 28),
+        ZIndex = 83,
+        Parent = header,
+    })
+
+    local dotPositions = {
+        UDim2.new(0.5, -3, 0, 1),
+        UDim2.new(1, -7, 0.5, -3),
+        UDim2.new(0.5, -3, 1, -7),
+        UDim2.new(0, 1, 0.5, -3),
+    }
+
+    for index, position in ipairs(dotPositions) do
+        new("Frame", {
+            BackgroundColor3 = index == 1 and Tokens.Color.Blue2 or Tokens.Color.Blue,
+            BackgroundTransparency = 0.05 + (index - 1) * 0.18,
+            BorderSizePixel = 0,
+            Position = position,
+            Size = UDim2.fromOffset(6, 6),
+            ZIndex = 84,
+            Parent = spinner,
+        }, {
+            corner(3),
+        })
+    end
 
     local status = makeText(card, merge(textProps("Preparing interface", 12, Tokens.Color.Text2), {
         Size = UDim2.new(1, 0, 0, 18),
@@ -1700,27 +1795,34 @@ local function buildLoading(root)
         Parent = track,
     }, {
         corner(4),
-        gradient(Tokens.Color.Blue, Tokens.Color.Blue2),
     })
+
+    local fillGradient = gradient(Tokens.Color.Blue, Tokens.Color.Blue2, Color3.fromRGB(63, 116, 255))
+    fillGradient.Offset = Vector2.new(-1, 0)
+    fillGradient.Parent = fill
 
     makeText(card, merge(textProps("duplicate safe / log ready / smooth boot", 10, Tokens.Color.Text3, true), {
         Size = UDim2.new(1, 0, 0, 16),
         ZIndex = 82,
     }))
 
-    return overlay, status, fill
+    return overlay, status, fill, spinner, fillGradient, cardStroke
 end
 
 local function buildWindow(config)
     config = config or {}
-    local consoleLoading = config.ConsoleLoading ~= false
+    local consoleLoading = {
+        Mode = config.ConsoleLoading == false and "silent" or (config.ConsoleLoading == "verbose" and "verbose" or "compact"),
+        LastBucket = nil,
+        LastMessage = nil,
+    }
 
-    printLoadBar(consoleLoading, 0.02, "Resolving GUI parent")
+    printLoadBar(consoleLoading, 0.02, "Booting " .. Larpter.Name, true)
 
     local parent = getParent()
     assert(parent, "LARPTER Premium could not find a GUI parent")
 
-    printLoadBar(consoleLoading, 0.08, "Creating ScreenGui")
+    printLoadBar(consoleLoading, 0.08, "Creating interface")
 
     local gui = new("ScreenGui", {
         Name = config.Name or "LARPTERPremium",
@@ -1734,14 +1836,15 @@ local function buildWindow(config)
     local tabWidth = config.TabWidth or 188
     local size = config.Size or UDim2.fromOffset(800, 548)
 
-    printLoadBar(consoleLoading, 0.14, "Building matte shell")
+    printLoadBar(consoleLoading, 0.14, "Building shell")
 
     local root = new("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Tokens.Color.Ink,
+        BackgroundTransparency = 0.02,
         BorderSizePixel = 0,
         GroupTransparency = 0,
-        Position = UDim2.fromScale(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.54),
         Size = size,
         Parent = gui,
     }, {
@@ -1757,7 +1860,7 @@ local function buildWindow(config)
     })
 
     local scale = new("UIScale", {
-        Scale = 0.96,
+        Scale = 0.9,
         Parent = root,
     })
 
@@ -1889,7 +1992,7 @@ local function buildWindow(config)
     })
     notifications.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
-    local loading, loadingStatus, loadingFill = buildLoading(root)
+    local loading, loadingStatus, loadingFill, loadingSpinner, loadingGradient, loadingStroke = buildLoading(root)
 
     local window = setmetatable({
         Gui = gui,
@@ -1904,6 +2007,9 @@ local function buildWindow(config)
         Loading = loading,
         LoadingStatus = loadingStatus,
         LoadingFill = loadingFill,
+        LoadingSpinner = loadingSpinner,
+        LoadingGradient = loadingGradient,
+        LoadingStroke = loadingStroke,
         MinimizeButton = min,
         CloseButton = close,
         ActiveLabel = activeLabel,
@@ -1928,6 +2034,43 @@ local function buildWindow(config)
     for _, level in ipairs(LevelOrder) do
         window.LogFilters[level] = true
     end
+
+    local shimmer = TweenService:Create(
+        loadingGradient,
+        TweenInfo.new(1.05, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
+        { Offset = Vector2.new(1, 0) }
+    )
+    shimmer:Play()
+    bin:Add(function()
+        pcall(function()
+            shimmer:Cancel()
+        end)
+    end)
+
+    local pulse = TweenService:Create(
+        loadingStroke,
+        TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true),
+        { Transparency = 0.45 }
+    )
+    pulse:Play()
+    bin:Add(function()
+        pcall(function()
+            pulse:Cancel()
+        end)
+    end)
+
+    local spinConnection
+    spinConnection = RunService.RenderStepped:Connect(function(deltaTime)
+        if window.Destroyed or not window.Loading or not loadingSpinner.Parent then
+            if spinConnection then
+                spinConnection:Disconnect()
+            end
+            return
+        end
+
+        loadingSpinner.Rotation = (loadingSpinner.Rotation + deltaTime * 240) % 360
+    end)
+    bin:Add(spinConnection)
 
     window:_setLoading(0.22, "Mounting shell")
 
@@ -1990,7 +2133,7 @@ local function buildWindow(config)
         window:Destroy()
     end)
 
-    window:_setLoading(0.54, "Preparing log console")
+    window:_setLoading(0.54, "Preparing logs")
     window:_buildLogTab()
     window:_setLoading(0.78, "Binding components")
     window:Info("LARPTER Premium initialized", {
@@ -2008,13 +2151,16 @@ function Larpter:CreateWindow(config)
     local state = getState()
     local active = state.ActiveWindow
     local preventDuplicate = config.PreventDuplicate ~= false
+    local consoleState = {
+        Mode = config.ConsoleLoading == false and "silent" or (config.ConsoleLoading == "verbose" and "verbose" or "compact"),
+    }
 
     if active and not active.Destroyed and active.Gui and active.Gui.Parent then
         if config.ForceReload == true then
-            printLoadBar(config.ConsoleLoading ~= false, 0.06, "ForceReload requested")
+            printLoadBar(consoleState, 0.06, "Force reload", true)
             active:Destroy()
         elseif preventDuplicate then
-            printLoadBar(config.ConsoleLoading ~= false, 1, "Duplicate load blocked")
+            printLoadBar(consoleState, 1, "Already loaded", true)
             active.Root.Visible = true
 
             if active.Minimized then
