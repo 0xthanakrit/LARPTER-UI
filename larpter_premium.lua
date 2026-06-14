@@ -27,6 +27,27 @@ local Larpter = {
     Name = "LARPTER Premium",
 }
 
+local STATE_KEY = "__LARPTER_PREMIUM_STATE"
+
+local function getSharedState()
+    local env = _G
+
+    if type(getgenv) == "function" then
+        local ok, value = pcall(getgenv)
+
+        if ok and type(value) == "table" then
+            env = value
+        end
+    end
+
+    env[STATE_KEY] = env[STATE_KEY] or {
+        ActiveWindow = nil,
+        Booting = false,
+    }
+
+    return env[STATE_KEY]
+end
+
 local Services = setmetatable({}, {
     __index = function(self, serviceName)
         local service = game:GetService(serviceName)
@@ -42,26 +63,31 @@ local TweenService = Services.TweenService
 local LocalPlayer = Players.LocalPlayer
 
 local Theme = {
-    Background = Color3.fromRGB(8, 10, 14),
-    Surface = Color3.fromRGB(15, 18, 24),
-    SurfaceHigh = Color3.fromRGB(22, 27, 35),
-    SurfaceLift = Color3.fromRGB(28, 34, 43),
-    Border = Color3.fromRGB(54, 66, 79),
-    BorderSoft = Color3.fromRGB(37, 45, 55),
-    Accent = Color3.fromRGB(26, 221, 178),
-    AccentAlt = Color3.fromRGB(70, 165, 255),
-    Text = Color3.fromRGB(239, 246, 255),
-    SubText = Color3.fromRGB(150, 163, 178),
-    Muted = Color3.fromRGB(94, 109, 126),
-    Danger = Color3.fromRGB(255, 91, 107),
-    Warning = Color3.fromRGB(255, 193, 92),
-    Success = Color3.fromRGB(57, 217, 138),
-    Debug = Color3.fromRGB(172, 139, 255),
+    Background = Color3.fromRGB(3, 4, 7),
+    ShellTop = Color3.fromRGB(12, 15, 23),
+    ShellBottom = Color3.fromRGB(4, 5, 9),
+    Surface = Color3.fromRGB(9, 11, 17),
+    SurfaceHigh = Color3.fromRGB(14, 17, 25),
+    SurfaceLift = Color3.fromRGB(20, 25, 37),
+    Card = Color3.fromRGB(10, 12, 18),
+    CardHover = Color3.fromRGB(17, 21, 31),
+    Border = Color3.fromRGB(42, 64, 102),
+    BorderSoft = Color3.fromRGB(24, 34, 54),
+    Accent = Color3.fromRGB(44, 132, 255),
+    AccentAlt = Color3.fromRGB(119, 178, 255),
+    AccentDim = Color3.fromRGB(18, 49, 97),
+    Text = Color3.fromRGB(237, 243, 255),
+    SubText = Color3.fromRGB(145, 158, 180),
+    Muted = Color3.fromRGB(79, 91, 112),
+    Danger = Color3.fromRGB(255, 82, 111),
+    Warning = Color3.fromRGB(255, 190, 92),
+    Success = Color3.fromRGB(76, 150, 255),
+    Debug = Color3.fromRGB(132, 166, 255),
 }
 
 local LogLevelStyles = {
-    info = { Label = "INFO", Color = Theme.AccentAlt },
-    success = { Label = "OK", Color = Theme.Success },
+    info = { Label = "INFO", Color = Theme.Accent },
+    success = { Label = "OK", Color = Theme.AccentAlt },
     warn = { Label = "WARN", Color = Theme.Warning },
     error = { Label = "ERR", Color = Theme.Danger },
     debug = { Label = "DBG", Color = Theme.Debug },
@@ -354,26 +380,40 @@ local function createComponentBase(parent, config, height)
     config = config or {}
 
     local root = create("Frame", {
-        BackgroundColor3 = Theme.SurfaceHigh,
-        BackgroundTransparency = 0.08,
-        Size = UDim2.new(1, 0, 0, height or 58),
+        Active = true,
+        BackgroundColor3 = Theme.Card,
+        BackgroundTransparency = 0,
+        Size = UDim2.new(1, 0, 0, height or 62),
         BorderSizePixel = 0,
         Parent = parent,
     }, {
         corner(8),
-        stroke(Theme.BorderSoft, 0.25, 1),
+    })
+
+    local cardStroke = stroke(Theme.BorderSoft, 0.22, 1)
+    cardStroke.Parent = root
+
+    create("Frame", {
+        BackgroundColor3 = Theme.AccentDim,
+        BackgroundTransparency = 0.12,
+        Size = UDim2.new(0, 3, 1, -18),
+        Position = UDim2.fromOffset(0, 9),
+        BorderSizePixel = 0,
+        Parent = root,
+    }, {
+        corner(3),
     })
 
     local title = create("TextLabel", shallowMerge(makeText(config.Title or "Untitled", 13, Theme.Text, "bold"), {
-        Position = UDim2.fromOffset(12, 8),
-        Size = UDim2.new(1, -150, 0, 18),
+        Position = UDim2.fromOffset(16, 10),
+        Size = UDim2.new(1, -190, 0, 18),
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = root,
     }))
 
     local description = create("TextLabel", shallowMerge(makeText(config.Description or "", 12, Theme.SubText), {
-        Position = UDim2.fromOffset(12, 28),
-        Size = UDim2.new(1, -150, 0, 18),
+        Position = UDim2.fromOffset(16, 31),
+        Size = UDim2.new(1, -190, 0, 18),
         TextTruncate = Enum.TextTruncate.AtEnd,
         Visible = config.Description ~= nil and config.Description ~= "",
         Parent = root,
@@ -383,7 +423,28 @@ local function createComponentBase(parent, config, height)
         Root = root,
         TitleLabel = title,
         DescriptionLabel = description,
+        Stroke = cardStroke,
     }
+
+    root.MouseEnter:Connect(function()
+        tween(root, {
+            BackgroundColor3 = Theme.CardHover,
+        }, 0.14)
+        tween(cardStroke, {
+            Color = Theme.Border,
+            Transparency = 0.08,
+        }, 0.14)
+    end)
+
+    root.MouseLeave:Connect(function()
+        tween(root, {
+            BackgroundColor3 = Theme.Card,
+        }, 0.14)
+        tween(cardStroke, {
+            Color = Theme.BorderSoft,
+            Transparency = 0.22,
+        }, 0.14)
+    end)
 
     function object:SetTitle(value)
         self.TitleLabel.Text = safeString(value)
@@ -405,21 +466,22 @@ end
 local function makeSection(host, title)
     local root = create("Frame", {
         BackgroundColor3 = Theme.Surface,
-        BackgroundTransparency = 0.1,
+        BackgroundTransparency = 0,
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         BorderSizePixel = 0,
         Parent = host.Content,
     }, {
-        corner(8),
-        stroke(Theme.BorderSoft, 0.45, 1),
-        padding(10, 10, 10, 10),
-        listLayout(Enum.FillDirection.Vertical, 8),
+        corner(10),
+        stroke(Theme.BorderSoft, 0.3, 1),
+        padding(12, 12, 12, 12),
+        listLayout(Enum.FillDirection.Vertical, 10),
     })
 
     local label = create("TextLabel", shallowMerge(makeText(title or "Section", 12, Theme.SubText, "bold"), {
-        Size = UDim2.new(1, 0, 0, 18),
+        Size = UDim2.new(1, 0, 0, 20),
         Text = string.upper(title or "Section"),
+        TextColor3 = Theme.Accent,
         Parent = root,
     }))
 
@@ -457,7 +519,7 @@ function SectionMethods:AddButton(config)
     local base = createComponentBase(host.Content, config, 56)
     local button = create("TextButton", {
         AutoButtonColor = false,
-        Text = "Run",
+        Text = "RUN",
         TextColor3 = Theme.Background,
         TextSize = 12,
         Font = Enum.Font.GothamBold,
@@ -469,16 +531,87 @@ function SectionMethods:AddButton(config)
         Parent = base.Root,
     }, {
         corner(7),
+        create("UIGradient", {
+            Rotation = 0,
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Theme.Accent),
+                ColorSequenceKeypoint.new(1, Theme.AccentAlt),
+            }),
+        }),
     })
 
     bindButtonFeedback(button, Theme.Accent, Theme.AccentAlt, Theme.Success)
 
     button.MouseButton1Click:Connect(function()
+        if base.Busy then
+            return
+        end
+
+        base.Busy = true
         safeCallback(config.Callback or noop)
+
+        task.delay(tonumber(config.Cooldown) or 0.18, function()
+            if base.Root and base.Root.Parent then
+                base.Busy = false
+            end
+        end)
     end)
 
     base.Button = button
     return base
+end
+
+function SectionMethods:AddParagraph(config)
+    local host = getComponentHost(self)
+    config = config or {}
+
+    local root = create("Frame", {
+        Active = true,
+        BackgroundColor3 = Theme.Card,
+        BackgroundTransparency = 0,
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BorderSizePixel = 0,
+        Parent = host.Content,
+    }, {
+        corner(8),
+        stroke(Theme.BorderSoft, 0.24, 1),
+        padding(14, 12, 14, 12),
+        listLayout(Enum.FillDirection.Vertical, 5),
+    })
+
+    local title = create("TextLabel", shallowMerge(makeText(config.Title or "Notice", 13, Theme.Text, "bold"), {
+        Size = UDim2.new(1, 0, 0, 18),
+        TextWrapped = true,
+        Parent = root,
+    }))
+
+    local content = create("TextLabel", shallowMerge(makeText(config.Content or config.Description or "", 12, Theme.SubText), {
+        Size = UDim2.new(1, 0, 0, 0),
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextWrapped = true,
+        Parent = root,
+    }))
+
+    local object = {
+        Root = root,
+        TitleLabel = title,
+        ContentLabel = content,
+    }
+
+    function object:SetTitle(value)
+        self.TitleLabel.Text = safeString(value)
+    end
+
+    function object:SetContent(value)
+        self.ContentLabel.Text = safeString(value)
+    end
+
+    function object:Destroy()
+        self.Root:Destroy()
+    end
+
+    return object
 end
 
 function SectionMethods:AddToggle(config)
@@ -976,6 +1109,10 @@ function TabMethods:AddButton(config)
     return SectionMethods.AddButton(self, config)
 end
 
+function TabMethods:AddParagraph(config)
+    return SectionMethods.AddParagraph(self, config)
+end
+
 function TabMethods:AddToggle(config)
     return SectionMethods.AddToggle(self, config)
 end
@@ -1002,12 +1139,22 @@ function WindowMethods:_addConnection(connection)
 end
 
 function WindowMethods:_makeTabButton(tab)
+    local tabIndex = 0
+
+    for _, item in ipairs(self.Tabs) do
+        if not item.Internal then
+            tabIndex = tabIndex + 1
+        end
+    end
+
+    local indexText = tab.Internal and "LG" or string.format("%02d", tabIndex)
     local button = create("TextButton", {
         AutoButtonColor = false,
         Text = "",
-        BackgroundColor3 = Theme.SurfaceHigh,
+        BackgroundColor3 = Theme.Card,
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 36),
+        Size = UDim2.new(1, 0, 0, 42),
+        LayoutOrder = tab.Internal and 999 or tabIndex,
         BorderSizePixel = 0,
         Parent = self.TabList,
     }, {
@@ -1017,17 +1164,34 @@ function WindowMethods:_makeTabButton(tab)
     local accent = create("Frame", {
         BackgroundColor3 = Theme.Accent,
         BackgroundTransparency = 1,
-        Size = UDim2.fromOffset(3, 16),
-        Position = UDim2.fromOffset(0, 10),
+        Size = UDim2.fromOffset(3, 20),
+        Position = UDim2.fromOffset(0, 11),
         BorderSizePixel = 0,
         Parent = button,
     }, {
         corner(2),
     })
 
+    local chip = create("TextLabel", {
+        Text = indexText,
+        TextColor3 = Theme.Muted,
+        TextSize = 10,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        BackgroundColor3 = Theme.SurfaceHigh,
+        BackgroundTransparency = 0.25,
+        Size = UDim2.fromOffset(28, 24),
+        Position = UDim2.fromOffset(10, 9),
+        BorderSizePixel = 0,
+        Parent = button,
+    }, {
+        corner(7),
+    })
+
     local label = create("TextLabel", shallowMerge(makeText(tab.Title, 13, Theme.SubText, "bold"), {
-        Position = UDim2.fromOffset(14, 0),
-        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.fromOffset(46, 0),
+        Size = UDim2.new(1, -54, 1, 0),
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = button,
     }))
@@ -1055,6 +1219,7 @@ function WindowMethods:_makeTabButton(tab)
     tab.Button = button
     tab.ButtonLabel = label
     tab.ButtonAccent = accent
+    tab.ButtonChip = chip
 end
 
 function WindowMethods:AddTab(config)
@@ -1076,6 +1241,7 @@ function WindowMethods:AddTab(config)
         CanvasSize = UDim2.fromOffset(0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Size = UDim2.fromScale(1, 1),
+        Position = UDim2.fromOffset(8, 0),
         Visible = false,
         Parent = self.PageHolder,
     }, {
@@ -1107,11 +1273,21 @@ function WindowMethods:SelectTab(tab)
 
     for _, item in ipairs(self.Tabs) do
         local selected = item == tab
-        item.Page.Visible = selected
+
+        if selected then
+            item.Page.Visible = true
+            item.Page.Position = UDim2.fromOffset(8, 0)
+            tween(item.Page, {
+                Position = UDim2.fromOffset(0, 0),
+            }, 0.22, Enum.EasingStyle.Quint)
+        else
+            item.Page.Visible = false
+            item.Page.Position = UDim2.fromOffset(8, 0)
+        end
 
         tween(item.Button, {
-            BackgroundTransparency = selected and 0.18 or 1,
-            BackgroundColor3 = selected and Theme.SurfaceLift or Theme.SurfaceHigh,
+            BackgroundTransparency = selected and 0.02 or 1,
+            BackgroundColor3 = selected and Theme.CardHover or Theme.Card,
         }, 0.16)
 
         tween(item.ButtonAccent, {
@@ -1119,27 +1295,30 @@ function WindowMethods:SelectTab(tab)
         }, 0.16)
 
         item.ButtonLabel.TextColor3 = selected and Theme.Text or Theme.SubText
+        item.ButtonChip.TextColor3 = selected and Theme.Background or Theme.Muted
+        item.ButtonChip.BackgroundColor3 = selected and Theme.Accent or Theme.SurfaceHigh
+        item.ButtonChip.BackgroundTransparency = selected and 0.04 or 0.25
     end
 
     self.SelectedTab = tab
-    self.HeaderTabLabel.Text = tab.Title
+    self.HeaderTabLabel.Text = "ACTIVE  " .. string.upper(tab.Title)
 end
 
 function WindowMethods:_createLogRow(entry)
     local style = LogLevelStyles[entry.Level] or LogLevelStyles.info
 
     local row = create("Frame", {
-        BackgroundColor3 = Theme.SurfaceHigh,
-        BackgroundTransparency = 0.08,
+        BackgroundColor3 = Theme.Card,
+        BackgroundTransparency = 0,
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         BorderSizePixel = 0,
         Parent = self.LogList,
     }, {
         corner(8),
-        stroke(Theme.BorderSoft, 0.42, 1),
-        padding(10, 8, 10, 8),
-        listLayout(Enum.FillDirection.Vertical, 4),
+        stroke(Theme.BorderSoft, 0.32, 1),
+        padding(10, 9, 10, 9),
+        listLayout(Enum.FillDirection.Vertical, 5),
     })
 
     local topLine = create("Frame", {
@@ -1147,11 +1326,6 @@ function WindowMethods:_createLogRow(entry)
         Size = UDim2.new(1, 0, 0, 20),
         Parent = row,
     })
-
-    create("TextLabel", shallowMerge(makeText(entry.Time, 11, Theme.Muted, "bold"), {
-        Size = UDim2.fromOffset(70, 20),
-        Parent = topLine,
-    }))
 
     create("TextLabel", {
         Text = style.Label,
@@ -1162,17 +1336,25 @@ function WindowMethods:_createLogRow(entry)
         TextYAlignment = Enum.TextYAlignment.Center,
         BackgroundColor3 = style.Color,
         BackgroundTransparency = 0,
-        Size = UDim2.fromOffset(52, 18),
-        Position = UDim2.fromOffset(76, 1),
+        Size = UDim2.fromOffset(54, 18),
+        Position = UDim2.fromOffset(0, 1),
         BorderSizePixel = 0,
         Parent = topLine,
     }, {
         corner(5),
     })
 
+    create("TextLabel", shallowMerge(makeText(entry.Time, 11, Theme.Muted, "bold"), {
+        Size = UDim2.fromOffset(82, 20),
+        Position = UDim2.fromOffset(64, 0),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = topLine,
+    }))
+
     local message = create("TextLabel", shallowMerge(makeText(entry.Message, 12, Theme.Text), {
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
+        Font = Enum.Font.Code,
         TextWrapped = true,
         Parent = row,
     }))
@@ -1181,6 +1363,7 @@ function WindowMethods:_createLogRow(entry)
     local meta = create("TextLabel", shallowMerge(makeText(metaText, 11, Theme.Muted), {
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
+        Font = Enum.Font.Code,
         TextWrapped = true,
         Visible = metaText ~= "",
         Parent = row,
@@ -1217,6 +1400,55 @@ function WindowMethods:_refreshLogs()
             end
         end)
     end
+end
+
+function WindowMethods:_setBootProgress(progress, text)
+    if self.Destroyed or not self.BootOverlay then
+        return
+    end
+
+    progress = clamp(tonumber(progress) or 0, 0, 1)
+
+    if self.BootStatusLabel and text then
+        self.BootStatusLabel.Text = text
+    end
+
+    if self.BootFill then
+        tween(self.BootFill, {
+            Size = UDim2.fromScale(progress, 1),
+        }, 0.24, Enum.EasingStyle.Quint)
+    end
+end
+
+function WindowMethods:_finishBoot()
+    if self.Destroyed or not self.BootOverlay then
+        return
+    end
+
+    self:_setBootProgress(1, "Ready")
+
+    if self.RootScale then
+        tween(self.RootScale, {
+            Scale = 1,
+        }, 0.28, Enum.EasingStyle.Back)
+    end
+
+    task.delay(0.28, function()
+        if self.Destroyed or not self.BootOverlay then
+            return
+        end
+
+        tween(self.BootOverlay, {
+            GroupTransparency = 1,
+        }, 0.24)
+
+        task.delay(0.26, function()
+            if self.BootOverlay then
+                self.BootOverlay:Destroy()
+                self.BootOverlay = nil
+            end
+        end)
+    end)
 end
 
 function WindowMethods:_buildLogTab()
@@ -1396,6 +1628,10 @@ function WindowMethods:_buildLogTab()
 end
 
 function WindowMethods:Log(level, message, meta)
+    if self.Destroyed then
+        return nil
+    end
+
     level = string.lower(safeString(level ~= nil and level or "info"))
 
     if not LogLevelStyles[level] then
@@ -1482,6 +1718,10 @@ function WindowMethods:CopyLatestLog()
 end
 
 function WindowMethods:Notify(config)
+    if self.Destroyed then
+        return nil
+    end
+
     config = config or {}
 
     local level = string.lower(config.Level or "info")
@@ -1559,7 +1799,7 @@ function WindowMethods:SetMinimized(minimized)
     self.Body.Visible = not self.Minimized
 
     tween(self.Root, {
-        Size = self.Minimized and UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 58) or self.Size,
+        Size = self.Minimized and UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 72) or self.Size,
     }, 0.2)
 
     self.MinimizeButton.Text = self.Minimized and "+" or "-"
@@ -1570,6 +1810,12 @@ function WindowMethods:Toggle()
 end
 
 function WindowMethods:Destroy()
+    if self.Destroyed then
+        return
+    end
+
+    self.Destroyed = true
+
     for _, connection in ipairs(self._connections) do
         pcall(function()
             connection:Disconnect()
@@ -1578,6 +1824,12 @@ function WindowMethods:Destroy()
 
     if self.Gui then
         self.Gui:Destroy()
+    end
+
+    local state = getSharedState()
+
+    if state.ActiveWindow == self then
+        state.ActiveWindow = nil
     end
 end
 
@@ -1596,7 +1848,8 @@ local function makeWindow(config)
 
     protectGui(gui)
 
-    local size = config.Size or UDim2.fromOffset(680, 480)
+    local tabWidth = config.TabWidth or 176
+    local size = config.Size or UDim2.fromOffset(760, 520)
     local root = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -1605,52 +1858,108 @@ local function makeWindow(config)
         BorderSizePixel = 0,
         Parent = gui,
     }, {
-        corner(10),
-        stroke(Theme.Border, 0.08, 1),
+        corner(12),
+        stroke(Theme.Border, 0.02, 1),
         create("UIGradient", {
             Rotation = 90,
             Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 23, 30)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 10, 14)),
+                ColorSequenceKeypoint.new(0, Theme.ShellTop),
+                ColorSequenceKeypoint.new(1, Theme.ShellBottom),
             }),
         }),
     })
 
+    local rootScale = create("UIScale", {
+        Scale = 0.96,
+        Parent = root,
+    })
+
     local header = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 58),
+        Size = UDim2.new(1, 0, 0, 72),
         Parent = root,
     })
 
     create("Frame", {
         BackgroundColor3 = Theme.Accent,
         BackgroundTransparency = 0,
-        Size = UDim2.new(0, 58, 0, 3),
-        Position = UDim2.fromOffset(18, 56),
+        Size = UDim2.new(1, -24, 0, 2),
+        Position = UDim2.fromOffset(12, 0),
         BorderSizePixel = 0,
         Parent = header,
     }, {
         corner(2),
+        create("UIGradient", {
+            Rotation = 0,
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Theme.Accent),
+                ColorSequenceKeypoint.new(0.6, Theme.AccentAlt),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(28, 74, 160)),
+            }),
+        }),
+    })
+
+    create("Frame", {
+        BackgroundColor3 = Theme.BorderSoft,
+        BackgroundTransparency = 0.35,
+        Size = UDim2.new(1, -24, 0, 1),
+        Position = UDim2.fromOffset(12, 71),
+        BorderSizePixel = 0,
+        Parent = header,
+    })
+
+    local brandMark = create("Frame", {
+        BackgroundColor3 = Theme.Accent,
+        Size = UDim2.fromOffset(40, 40),
+        Position = UDim2.fromOffset(16, 16),
+        BorderSizePixel = 0,
+        Parent = header,
+    }, {
+        corner(10),
+        create("UIGradient", {
+            Rotation = 45,
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Theme.Accent),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(23, 86, 190)),
+            }),
+        }),
+    })
+
+    create("TextLabel", {
+        Text = "LP",
+        TextColor3 = Theme.Background,
+        TextSize = 14,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        BackgroundTransparency = 1,
+        Size = UDim2.fromScale(1, 1),
+        Parent = brandMark,
     })
 
     local title = create("TextLabel", shallowMerge(makeText(config.Title or Larpter.Name, 16, Theme.Text, "bold"), {
-        Position = UDim2.fromOffset(18, 8),
-        Size = UDim2.new(1, -180, 0, 22),
+        Position = UDim2.fromOffset(68, 13),
+        Size = UDim2.new(1, -360, 0, 24),
         Parent = header,
     }))
 
     local subtitle = create("TextLabel", shallowMerge(makeText(config.Subtitle or "Premium control surface", 12, Theme.SubText), {
-        Position = UDim2.fromOffset(18, 30),
-        Size = UDim2.new(1, -220, 0, 18),
+        Position = UDim2.fromOffset(68, 38),
+        Size = UDim2.new(1, -380, 0, 18),
         Parent = header,
     }))
 
     local activeTabLabel = create("TextLabel", shallowMerge(makeText("", 11, Theme.Muted, "bold"), {
-        Size = UDim2.fromOffset(140, 22),
-        Position = UDim2.new(1, -260, 0, 18),
-        TextXAlignment = Enum.TextXAlignment.Right,
+        BackgroundColor3 = Theme.SurfaceHigh,
+        BackgroundTransparency = 0.04,
+        Size = UDim2.fromOffset(150, 28),
+        Position = UDim2.new(1, -292, 0, 22),
+        TextXAlignment = Enum.TextXAlignment.Center,
         Parent = header,
-    }))
+    }), {
+        corner(14),
+        stroke(Theme.BorderSoft, 0.35, 1),
+    })
 
     local minimizeButton = create("TextButton", {
         AutoButtonColor = false,
@@ -1660,8 +1969,8 @@ local function makeWindow(config)
         Font = Enum.Font.GothamBold,
         BackgroundColor3 = Theme.SurfaceHigh,
         BackgroundTransparency = 0.12,
-        Size = UDim2.fromOffset(32, 30),
-        Position = UDim2.new(1, -76, 0, 14),
+        Size = UDim2.fromOffset(34, 30),
+        Position = UDim2.new(1, -84, 0, 21),
         BorderSizePixel = 0,
         Parent = header,
     }, {
@@ -1676,8 +1985,8 @@ local function makeWindow(config)
         Font = Enum.Font.GothamBold,
         BackgroundColor3 = Theme.SurfaceHigh,
         BackgroundTransparency = 0.12,
-        Size = UDim2.fromOffset(32, 30),
-        Position = UDim2.new(1, -38, 0, 14),
+        Size = UDim2.fromOffset(34, 30),
+        Position = UDim2.new(1, -42, 0, 21),
         BorderSizePixel = 0,
         Parent = header,
     }, {
@@ -1689,35 +1998,42 @@ local function makeWindow(config)
 
     local body = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, -24, 1, -74),
-        Position = UDim2.fromOffset(12, 64),
+        Size = UDim2.new(1, -28, 1, -92),
+        Position = UDim2.fromOffset(14, 78),
         Parent = root,
     })
 
     local sidebar = create("Frame", {
         BackgroundColor3 = Theme.Surface,
-        BackgroundTransparency = 0.08,
-        Size = UDim2.new(0, config.TabWidth or 154, 1, 0),
+        BackgroundTransparency = 0,
+        Size = UDim2.new(0, tabWidth, 1, 0),
         BorderSizePixel = 0,
         Parent = body,
     }, {
-        corner(8),
-        stroke(Theme.BorderSoft, 0.38, 1),
-        padding(8, 8, 8, 8),
+        corner(10),
+        stroke(Theme.BorderSoft, 0.24, 1),
+        padding(10, 10, 10, 10),
     })
 
     local tabList = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.fromScale(1, 1),
+        Size = UDim2.new(1, 0, 1, -34),
         Parent = sidebar,
     }, {
-        listLayout(Enum.FillDirection.Vertical, 6),
+        listLayout(Enum.FillDirection.Vertical, 7),
     })
+
+    create("TextLabel", shallowMerge(makeText("LARPTER UI  /  v" .. Larpter.Version, 10, Theme.Muted, "bold"), {
+        Size = UDim2.new(1, 0, 0, 20),
+        Position = UDim2.new(0, 0, 1, -22),
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = sidebar,
+    }))
 
     local pageHolder = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, -(config.TabWidth or 154) - 12, 1, 0),
-        Position = UDim2.new(0, (config.TabWidth or 154) + 12, 0, 0),
+        Size = UDim2.new(1, -tabWidth - 14, 1, 0),
+        Position = UDim2.new(0, tabWidth + 14, 0, 0),
         Parent = body,
     })
 
@@ -1733,15 +2049,100 @@ local function makeWindow(config)
 
     notificationList.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
+    local bootOverlay = create("CanvasGroup", {
+        BackgroundColor3 = Theme.Background,
+        BackgroundTransparency = 0,
+        GroupTransparency = 0,
+        Size = UDim2.fromScale(1, 1),
+        ZIndex = 80,
+        Parent = root,
+    }, {
+        corner(12),
+    })
+
+    local bootCard = create("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = Theme.Surface,
+        BackgroundTransparency = 0,
+        Size = UDim2.fromOffset(330, 138),
+        Position = UDim2.fromScale(0.5, 0.5),
+        BorderSizePixel = 0,
+        ZIndex = 81,
+        Parent = bootOverlay,
+    }, {
+        corner(12),
+        stroke(Theme.Border, 0.1, 1),
+        padding(16, 14, 16, 14),
+        listLayout(Enum.FillDirection.Vertical, 8),
+    })
+
+    create("TextLabel", {
+        Text = "LARPTER PREMIUM",
+        TextColor3 = Theme.Text,
+        TextSize = 15,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 20),
+        ZIndex = 82,
+        Parent = bootCard,
+    })
+
+    local bootStatusLabel = create("TextLabel", shallowMerge(makeText("Starting interface", 12, Theme.SubText), {
+        Size = UDim2.new(1, 0, 0, 18),
+        ZIndex = 82,
+        Parent = bootCard,
+    }))
+
+    local bootTrack = create("Frame", {
+        BackgroundColor3 = Theme.SurfaceLift,
+        BackgroundTransparency = 0.08,
+        Size = UDim2.new(1, 0, 0, 8),
+        BorderSizePixel = 0,
+        ZIndex = 82,
+        Parent = bootCard,
+    }, {
+        corner(4),
+    })
+
+    local bootFill = create("Frame", {
+        BackgroundColor3 = Theme.Accent,
+        Size = UDim2.fromScale(0.08, 1),
+        BorderSizePixel = 0,
+        ZIndex = 83,
+        Parent = bootTrack,
+    }, {
+        corner(4),
+        create("UIGradient", {
+            Rotation = 0,
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Theme.Accent),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(23, 86, 190)),
+            }),
+        }),
+    })
+
+    create("TextLabel", shallowMerge(makeText("duplicate-safe  /  logs-ready  /  smooth boot", 10, Theme.Muted, "bold"), {
+        Size = UDim2.new(1, 0, 0, 16),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 82,
+        Parent = bootCard,
+    }))
+
     local window = setmetatable({
         Gui = gui,
         Root = root,
+        RootScale = rootScale,
         Header = header,
         Body = body,
         Sidebar = sidebar,
         TabList = tabList,
         PageHolder = pageHolder,
         NotificationList = notificationList,
+        BootOverlay = bootOverlay,
+        BootStatusLabel = bootStatusLabel,
+        BootFill = bootFill,
         Title = config.Title or Larpter.Name,
         Subtitle = subtitle,
         TitleLabel = title,
@@ -1758,12 +2159,15 @@ local function makeWindow(config)
         LogFilters = {},
         LogSearch = "",
         AutoScrollLogs = true,
+        Destroyed = false,
         _connections = {},
     }, WindowMethods)
 
     for _, level in ipairs(DefaultLogLevels) do
         window.LogFilters[level] = true
     end
+
+    window:_setBootProgress(0.28, "Mounting shell")
 
     local dragging = false
     local dragInput = nil
@@ -1826,17 +2230,86 @@ local function makeWindow(config)
         window:Destroy()
     end)
 
+    window:_setBootProgress(0.58, "Preparing log console")
     window:_buildLogTab()
+    window:_setBootProgress(0.78, "Binding controls")
     window:Info("LARPTER Premium initialized", {
         version = Larpter.Version,
         maxLogs = window.MaxLogs,
     })
+    window:_finishBoot()
 
     return window
 end
 
 function Larpter:CreateWindow(config)
-    return makeWindow(config)
+    config = config or {}
+
+    local state = getSharedState()
+    local active = state.ActiveWindow
+    local preventDuplicate = config.PreventDuplicate ~= false
+
+    if active and not active.Destroyed and active.Gui and active.Gui.Parent then
+        if config.ForceReload == true then
+            active:Destroy()
+        elseif preventDuplicate then
+            active.Root.Visible = true
+
+            if active.Minimized then
+                active:SetMinimized(false)
+            end
+
+            active:Warn("Duplicate load blocked", {
+                hint = "Use ForceReload = true to rebuild",
+            })
+            active:Notify({
+                Title = "LARPTER Premium",
+                Content = "UI is already loaded",
+                Level = "warn",
+            })
+
+            return active
+        end
+    end
+
+    state.Booting = true
+
+    local ok, window = pcall(makeWindow, config)
+    state.Booting = false
+
+    if not ok then
+        state.ActiveWindow = nil
+        error(window, 2)
+    end
+
+    state.ActiveWindow = window
+
+    return window
+end
+
+function Larpter:GetActiveWindow()
+    local active = getSharedState().ActiveWindow
+
+    if active and not active.Destroyed and active.Gui and active.Gui.Parent then
+        return active
+    end
+
+    return nil
+end
+
+function Larpter:IsLoaded()
+    return self:GetActiveWindow() ~= nil
+end
+
+function Larpter:DestroyActive()
+    local active = self:GetActiveWindow()
+
+    if active then
+        active:Destroy()
+        return true
+    end
+
+    return false
 end
 
 function Larpter:CreateDemo()
@@ -1847,6 +2320,13 @@ function Larpter:CreateDemo()
     })
 
     local dashboard = window:AddTab({ Title = "Dashboard" })
+    local overview = dashboard:AddSection("Overview")
+
+    overview:AddParagraph({
+        Title = "LARPTER Premium v" .. Larpter.Version,
+        Content = "A dark control surface with first-class logs, polished controls, and executor-friendly loading.",
+    })
+
     local actions = dashboard:AddSection("Quick actions")
 
     actions:AddButton({
