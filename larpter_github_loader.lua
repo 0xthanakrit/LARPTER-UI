@@ -1,4 +1,4 @@
-local LIBRARY_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/larpter_premium.lua"
+local LIBRARY_URL = "https://raw.githubusercontent.com/0xthanakrit/LARPTER-UI/main/larpter_premium.lua"
 
 local source = game:HttpGet(LIBRARY_URL)
 local Larpter = loadstring(source)()
