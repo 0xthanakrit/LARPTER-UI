@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 3.0.0
+    Version 3.0.1
 
     Production-oriented single-file Roblox UI framework:
     - matte charcoal / blue design system
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "3.0.0",
+    Version = "3.0.1",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -2093,9 +2093,15 @@ local function buildWindow(config)
             dragStart = input.Position
             startPosition = root.Position
 
-            input.Changed:Connect(function()
+            local releaseConnection
+            releaseConnection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
+
+                    if releaseConnection then
+                        releaseConnection:Disconnect()
+                        releaseConnection = nil
+                    end
                 end
             end)
         end
@@ -2123,13 +2129,13 @@ local function buildWindow(config)
         end
     end))
 
-    minimize.MouseButton1Click:Connect(function()
+    maid:Add(minimize.MouseButton1Click:Connect(function()
         window:SetMinimized(not window.Minimized)
-    end)
+    end))
 
-    close.MouseButton1Click:Connect(function()
+    maid:Add(close.MouseButton1Click:Connect(function()
         window:Destroy()
-    end)
+    end))
 
     local minBootTime = tonumber(config.MinBootTime) or 2
     local startedAt = os.clock()
@@ -2232,6 +2238,12 @@ function Larpter:CreateDemo(config)
     }, config or {})
 
     local window = self:CreateWindow(config)
+
+    if window.__DemoMounted then
+        return window
+    end
+
+    window.__DemoMounted = true
 
     local dashboard = window:AddTab({ Title = "Dashboard" })
     local overview = dashboard:AddSection("Overview")
