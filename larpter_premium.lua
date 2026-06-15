@@ -1,9 +1,9 @@
 --[[
     LARPTER Premium UI Framework
-    Version 3.1.0
+    Version 4.0.0
 
     Production-oriented single-file Roblox UI framework:
-    - graphite / electric-blue design system
+    - prism steel / glass control surface
     - deterministic cleanup
     - duplicate-load guard
     - boot overlay with real timing and motion
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "3.1.0",
+    Version = "4.0.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -35,28 +35,30 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Shell = Color3.fromRGB(52, 58, 70),
-        ShellTop = Color3.fromRGB(64, 72, 86),
-        ShellBottom = Color3.fromRGB(42, 48, 60),
-        Panel = Color3.fromRGB(61, 69, 83),
-        PanelRaised = Color3.fromRGB(72, 82, 99),
-        PanelSunken = Color3.fromRGB(49, 56, 69),
-        Card = Color3.fromRGB(67, 76, 93),
-        CardHover = Color3.fromRGB(79, 91, 112),
-        Border = Color3.fromRGB(105, 123, 151),
-        BorderSoft = Color3.fromRGB(83, 98, 123),
-        BorderHot = Color3.fromRGB(91, 157, 255),
-        Blue = Color3.fromRGB(74, 149, 255),
-        BlueSoft = Color3.fromRGB(156, 207, 255),
-        BlueDim = Color3.fromRGB(54, 102, 170),
-        Mint = Color3.fromRGB(91, 221, 183),
+        Shell = Color3.fromRGB(45, 49, 60),
+        ShellTop = Color3.fromRGB(78, 76, 96),
+        ShellBottom = Color3.fromRGB(39, 44, 54),
+        Panel = Color3.fromRGB(57, 63, 77),
+        PanelRaised = Color3.fromRGB(72, 79, 96),
+        PanelSunken = Color3.fromRGB(46, 52, 64),
+        Card = Color3.fromRGB(65, 72, 88),
+        CardHover = Color3.fromRGB(82, 90, 110),
+        Border = Color3.fromRGB(110, 121, 145),
+        BorderSoft = Color3.fromRGB(87, 97, 118),
+        BorderHot = Color3.fromRGB(153, 135, 255),
+        Blue = Color3.fromRGB(105, 218, 255),
+        BlueSoft = Color3.fromRGB(196, 238, 255),
+        BlueDim = Color3.fromRGB(50, 126, 160),
+        Mint = Color3.fromRGB(101, 235, 184),
+        Gold = Color3.fromRGB(255, 201, 112),
+        Rose = Color3.fromRGB(255, 114, 151),
         Text = Color3.fromRGB(248, 250, 255),
-        TextMuted = Color3.fromRGB(218, 226, 238),
-        TextFaint = Color3.fromRGB(168, 181, 202),
-        BlackText = Color3.fromRGB(14, 24, 38),
-        Red = Color3.fromRGB(255, 84, 112),
-        Amber = Color3.fromRGB(255, 193, 96),
-        Violet = Color3.fromRGB(166, 185, 255),
+        TextMuted = Color3.fromRGB(222, 229, 240),
+        TextFaint = Color3.fromRGB(171, 183, 203),
+        BlackText = Color3.fromRGB(20, 27, 39),
+        Red = Color3.fromRGB(255, 114, 151),
+        Amber = Color3.fromRGB(255, 201, 112),
+        Violet = Color3.fromRGB(181, 169, 255),
     },
     Radius = {
         Sm = 6,
@@ -365,22 +367,52 @@ local Console = {}
 Console.__index = Console
 
 function Console.new(option)
+    local mode = "line"
+
+    if option == false then
+        mode = "silent"
+    elseif option == "verbose" then
+        mode = "verbose"
+    elseif option == "compact" then
+        mode = "compact"
+    elseif option == "silent" then
+        mode = "silent"
+    end
+
     return setmetatable({
-        Mode = option == false and "silent" or (option == "verbose" and "verbose" or (option == "compact" and "compact" or "line")),
+        Mode = mode,
         HasLineConsole = type(rconsoleprint) == "function",
+        Session = string.format("%04X", math.random(0, 65535)),
+        StartedAt = os.clock(),
         LastLength = 0,
         LastBucket = nil,
         LastMessage = nil,
+        PrintedStart = false,
+        SpinnerIndex = 0,
     }, Console)
 end
 
-function Console:_line(progress, message)
-    local width = 24
+function Console:_bar(progress)
+    local width = 22
     local filled = math.floor(progress * width + 0.5)
-    local empty = width - filled
+    return string.rep("#", filled) .. string.rep(".", width - filled)
+end
+
+function Console:_line(progress, message)
+    self.SpinnerIndex = (self.SpinnerIndex % 4) + 1
+
+    local spinner = ({ "-", "\\", "|", "/" })[self.SpinnerIndex]
     local percent = math.floor(progress * 100 + 0.5)
-    local bar = string.rep("=", filled) .. string.rep("-", empty)
-    return string.format("[LARPTER] [%s] %3d%%  %s", bar, percent, message or "Loading")
+    local elapsed = os.clock() - self.StartedAt
+    return string.format(
+        "LARPTER BOOT %s  %s  [%s]  %3d%%  %-22s  %.1fs",
+        self.Session,
+        spinner,
+        self:_bar(progress),
+        percent,
+        message or "Loading",
+        elapsed
+    )
 end
 
 function Console:Progress(progress, message, force)
@@ -402,6 +434,9 @@ function Console:Progress(progress, message, force)
             if progress >= 1 or force == "done" then
                 rconsoleprint("\n")
             end
+        elseif not self.PrintedStart then
+            self.PrintedStart = true
+            print(line)
         elseif progress >= 1 or force then
             print(line)
         end
@@ -1221,11 +1256,41 @@ function Window:_progress(progress, label, waitTime)
         return
     end
 
-    progress = clamp(progress or 0, 0, 1)
-    self.Console:Progress(progress, label)
-    self.LoadingStatus.Text = string.format("%s  %d%%", label or "Loading", math.floor(progress * 100 + 0.5))
-    tween(self.LoadingFill, { Size = UDim2.fromScale(progress, 1) }, Tokens.Motion.Base)
-    task.wait(waitTime or 0.18)
+    local target = clamp(progress or 0, 0, 1)
+    local start = self.BootProgress or 0
+    local duration = math.max(tonumber(waitTime) or 0.18, 0.05)
+    local startedAt = os.clock()
+
+    while true do
+        if self.Destroyed or not self.LoadingOverlay then
+            return
+        end
+
+        local alpha = clamp((os.clock() - startedAt) / duration, 0, 1)
+        local current = start + (target - start) * alpha
+        local percent = math.floor(current * 100 + 0.5)
+
+        self.Console:Progress(current, label)
+        self.LoadingStatus.Text = string.format("%s  %d%%", label or "Loading", percent)
+
+        if self.LoadingPercent then
+            self.LoadingPercent.Text = string.format("%d%%", percent)
+        end
+
+        if self.LoadingStage then
+            self.LoadingStage.Text = current < 0.5 and "building runtime shell" or "binding interface modules"
+        end
+
+        self.LoadingFill.Size = UDim2.fromScale(current, 1)
+
+        if alpha >= 1 then
+            break
+        end
+
+        task.wait(0.04)
+    end
+
+    self.BootProgress = target
 end
 
 function Window:_finishBoot()
@@ -1235,6 +1300,12 @@ function Window:_finishBoot()
 
     self.Console:Progress(1, "Ready", "done")
     self.LoadingStatus.Text = "Ready"
+    if self.LoadingPercent then
+        self.LoadingPercent.Text = "100%"
+    end
+    if self.LoadingStage then
+        self.LoadingStage.Text = "ready"
+    end
     self:SetStatus("Ready", "success")
     tween(self.LoadingFill, { Size = UDim2.fromScale(1, 1) }, Tokens.Motion.Base)
     tween(self.RootScale, { Scale = 1 }, Tokens.Motion.Slow, Enum.EasingStyle.Back)
@@ -1788,7 +1859,7 @@ end
 
 local function loadingView(root)
     local overlay = create("CanvasGroup", {
-        BackgroundColor3 = Tokens.Color.Shell,
+        BackgroundColor3 = Tokens.Color.ShellBottom,
         BackgroundTransparency = 0,
         BorderSizePixel = 0,
         GroupTransparency = 0,
@@ -1800,37 +1871,75 @@ local function loadingView(root)
         gradient({ Tokens.Color.ShellTop, Tokens.Color.ShellBottom }, 90),
     })
 
+    create("Frame", {
+        BackgroundColor3 = Tokens.Color.Blue,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(22, 18),
+        Size = UDim2.new(1, -44, 0, 2),
+        ZIndex = 91,
+        Parent = overlay,
+    }, {
+        corner(2),
+        gradient({ Tokens.Color.Violet, Tokens.Color.Blue, Tokens.Color.Gold }, 0),
+    })
+
     local card = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(420, 170),
+        Size = UDim2.fromOffset(462, 194),
         ZIndex = 91,
         Parent = overlay,
     }, {
         corner(Tokens.Radius.Xl),
-        padding(18, 16, 18, 16),
-        list(Enum.FillDirection.Vertical, 9),
+        stroke(Tokens.Color.BorderHot, 0.15, 1),
+        gradient({ Color3.fromRGB(82, 88, 107), Tokens.Color.Panel }, 90),
     })
 
-    local cardStroke = stroke(Tokens.Color.BorderHot, 0.14, 1)
-    cardStroke.Parent = card
+    local cardStroke = card:FindFirstChildOfClass("UIStroke")
 
     local cardScale = create("UIScale", {
         Scale = 1,
         Parent = card,
     })
 
+    create("Frame", {
+        BackgroundColor3 = Tokens.Color.Violet,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(0, 18),
+        Size = UDim2.new(0, 4, 1, -36),
+        ZIndex = 92,
+        Parent = card,
+    }, {
+        corner(4),
+        gradient({ Tokens.Color.Violet, Tokens.Color.Blue, Tokens.Color.Gold }, 90),
+    })
+
     local header = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 30),
+        Position = UDim2.fromOffset(22, 18),
+        Size = UDim2.new(1, -44, 0, 38),
         ZIndex = 92,
         Parent = card,
     })
 
-    text(header, merge(textBase("LARPTER PREMIUM", 16, Tokens.Color.BlueSoft, true), {
-        Size = UDim2.new(1, -44, 1, 0),
+    text(header, merge(textBase("LARPTER BOOTSTRAP", 16, Tokens.Color.Text, true), {
+        Size = UDim2.new(1, -118, 0, 21),
+        ZIndex = 93,
+    }))
+
+    text(header, merge(textBase("production runtime", 11, Tokens.Color.TextFaint, true), {
+        Position = UDim2.fromOffset(0, 22),
+        Size = UDim2.new(1, -118, 0, 16),
+        ZIndex = 93,
+    }))
+
+    local percent = text(header, merge(textBase("0%", 26, Tokens.Color.BlueSoft, true), {
+        AnchorPoint = Vector2.new(1, 0),
+        Position = UDim2.new(1, -42, 0, -2),
+        Size = UDim2.fromOffset(82, 34),
+        TextXAlignment = Enum.TextXAlignment.Right,
         ZIndex = 93,
     }))
 
@@ -1865,18 +1974,27 @@ local function loadingView(root)
     end
 
     local status = text(card, merge(textBase("Preparing interface", 12, Tokens.Color.TextMuted), {
-        Size = UDim2.new(1, 0, 0, 18),
+        Position = UDim2.fromOffset(22, 74),
+        Size = UDim2.new(1, -44, 0, 20),
+        ZIndex = 92,
+    }))
+
+    local stage = text(card, merge(textBase("mounting visual shell", 11, Tokens.Color.TextFaint, true), {
+        Position = UDim2.fromOffset(22, 96),
+        Size = UDim2.new(1, -44, 0, 18),
         ZIndex = 92,
     }))
 
     local track = create("Frame", {
-        BackgroundColor3 = Tokens.Color.PanelRaised,
+        BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 8),
+        Position = UDim2.fromOffset(22, 126),
+        Size = UDim2.new(1, -44, 0, 10),
         ZIndex = 92,
         Parent = card,
     }, {
-        corner(4),
+        corner(5),
+        stroke(Tokens.Color.BorderSoft, 0.38, 1),
     })
 
     local fill = create("Frame", {
@@ -1886,21 +2004,24 @@ local function loadingView(root)
         ZIndex = 93,
         Parent = track,
     }, {
-        corner(4),
+        corner(5),
     })
 
-    local fillGradient = gradient({ Tokens.Color.Blue, Tokens.Color.BlueSoft, Color3.fromRGB(71, 118, 255) }, 0)
+    local fillGradient = gradient({ Tokens.Color.Violet, Tokens.Color.Blue, Tokens.Color.Gold }, 0)
     fillGradient.Offset = Vector2.new(-1, 0)
     fillGradient.Parent = fill
 
-    text(card, merge(textBase("LARPTER RUNTIME  " .. Larpter.Version, 10, Tokens.Color.TextFaint, true), {
-        Size = UDim2.new(1, 0, 0, 16),
+    text(card, merge(textBase("runtime " .. Larpter.Version .. " / duplicate guarded / log ready", 10, Tokens.Color.TextFaint, true), {
+        Position = UDim2.fromOffset(22, 153),
+        Size = UDim2.new(1, -44, 0, 16),
         ZIndex = 92,
     }))
 
     return {
         Overlay = overlay,
         Status = status,
+        Percent = percent,
+        Stage = stage,
         Fill = fill,
         Spinner = spinner,
         FillGradient = fillGradient,
@@ -1925,13 +2046,13 @@ local function buildWindow(config)
 
     local maid = Maid.new()
     local console = Console.new(config.ConsoleLoading)
-    local tabWidth = tonumber(config.TabWidth) or 190
-    local size = config.Size or UDim2.fromOffset(820, 560)
+    local tabWidth = tonumber(config.TabWidth) or 194
+    local size = config.Size or UDim2.fromOffset(860, 580)
 
     local root = create("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Tokens.Color.Shell,
-        BackgroundTransparency = 0.03,
+        BackgroundTransparency = 0.01,
         BorderSizePixel = 0,
         GroupTransparency = 0,
         Position = UDim2.fromScale(0.5, 0.54),
@@ -1939,7 +2060,7 @@ local function buildWindow(config)
         Parent = gui,
     }, {
         corner(Tokens.Radius.Xl),
-        stroke(Tokens.Color.BorderHot, 0.08, 1),
+        stroke(Tokens.Color.BorderHot, 0.14, 1),
         gradient({ Tokens.Color.ShellTop, Tokens.Color.ShellBottom }, 90),
     })
 
@@ -1950,51 +2071,52 @@ local function buildWindow(config)
 
     local header = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 86),
+        Size = UDim2.new(1, 0, 0, 96),
         Parent = root,
     })
 
     create("Frame", {
-        BackgroundColor3 = Tokens.Color.Blue,
+        BackgroundColor3 = Tokens.Color.Violet,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(14, 0),
-        Size = UDim2.new(1, -28, 0, 2),
+        Position = UDim2.fromOffset(18, 0),
+        Size = UDim2.new(1, -36, 0, 3),
         Parent = header,
     }, {
         corner(2),
-        gradient({ Tokens.Color.Blue, Tokens.Color.BlueSoft, Color3.fromRGB(38, 79, 168) }, 0),
+        gradient({ Tokens.Color.Violet, Tokens.Color.Blue, Tokens.Color.Gold }, 0),
     })
 
     local brand = create("Frame", {
-        BackgroundColor3 = Tokens.Color.Blue,
+        BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(18, 20),
-        Size = UDim2.fromOffset(44, 44),
+        Position = UDim2.fromOffset(20, 22),
+        Size = UDim2.fromOffset(50, 50),
         Parent = header,
     }, {
         corner(Tokens.Radius.Lg),
-        gradient({ Tokens.Color.Blue, Color3.fromRGB(40, 86, 190) }, 45),
+        stroke(Tokens.Color.BorderHot, 0.18, 1),
+        gradient({ Tokens.Color.Violet, Tokens.Color.BlueDim }, 45),
     })
 
-    text(brand, merge(textBase("LP", 14, Tokens.Color.BlackText, true), {
+    text(brand, merge(textBase("LP", 14, Tokens.Color.Text, true), {
         Size = UDim2.fromScale(1, 1),
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
 
     local title = text(header, merge(textBase(config.Title or Larpter.Name, 17, Tokens.Color.Text, true), {
-        Position = UDim2.fromOffset(76, 17),
+        Position = UDim2.fromOffset(84, 21),
         Size = UDim2.new(1, -470, 0, 24),
     }))
 
-    local subtitle = text(header, merge(textBase(config.Subtitle or "Production-grade control surface", 12, Tokens.Color.TextMuted), {
-        Position = UDim2.fromOffset(76, 44),
+    local subtitle = text(header, merge(textBase(config.Subtitle or "Prism steel control deck", 12, Tokens.Color.TextMuted), {
+        Position = UDim2.fromOffset(84, 48),
         Size = UDim2.new(1, -470, 0, 18),
     }))
 
     local activeLabel = text(header, merge(textBase("ACTIVE", 11, Tokens.Color.TextMuted, true), {
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BackgroundTransparency = 0.05,
-        Position = UDim2.new(1, -324, 0, 27),
+        Position = UDim2.new(1, -324, 0, 25),
         Size = UDim2.fromOffset(184, 30),
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
@@ -2004,7 +2126,7 @@ local function buildWindow(config)
     local statusBar = create("Frame", {
         BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
-        Position = UDim2.new(1, -324, 0, 61),
+        Position = UDim2.new(1, -324, 0, 60),
         Size = UDim2.fromOffset(184, 17),
         Parent = header,
     }, {
@@ -2034,7 +2156,7 @@ local function buildWindow(config)
         TextColor3 = Tokens.Color.Text,
         TextSize = 16,
         Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -92, 0, 27),
+        Position = UDim2.new(1, -92, 0, 25),
         Size = UDim2.fromOffset(34, 30),
     }, { corner(Tokens.Radius.Md) })
 
@@ -2044,29 +2166,30 @@ local function buildWindow(config)
         TextColor3 = Tokens.Color.Text,
         TextSize = 12,
         Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -48, 0, 27),
+        Position = UDim2.new(1, -48, 0, 25),
         Size = UDim2.fromOffset(34, 30),
     }, { corner(Tokens.Radius.Md) })
 
     local body = create("Frame", {
         BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(14, 92),
-        Size = UDim2.new(1, -28, 1, -106),
+        Position = UDim2.fromOffset(16, 104),
+        Size = UDim2.new(1, -32, 1, -120),
         Parent = root,
     })
 
     local sidebar = create("Frame", {
-        BackgroundColor3 = Tokens.Color.Panel,
+        BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
         Size = UDim2.new(0, tabWidth, 1, 0),
         Parent = body,
     }, {
         corner(Tokens.Radius.Lg),
-        stroke(Tokens.Color.Border, 0.22, 1),
-        padding(10, 10, 10, 10),
+        stroke(Tokens.Color.BorderSoft, 0.2, 1),
+        padding(11, 11, 11, 11),
+        gradient({ Tokens.Color.Panel, Tokens.Color.PanelSunken }, 90),
     })
 
-    text(sidebar, merge(textBase("NAVIGATION", 10, Tokens.Color.TextFaint, true), {
+    text(sidebar, merge(textBase("COMMANDS", 10, Tokens.Color.TextFaint, true), {
         Size = UDim2.new(1, 0, 0, 18),
     }))
 
@@ -2085,11 +2208,23 @@ local function buildWindow(config)
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
 
-    local pageHost = create("Frame", {
-        BackgroundTransparency = 1,
+    local contentPanel = create("Frame", {
+        BackgroundColor3 = Tokens.Color.PanelSunken,
+        BorderSizePixel = 0,
         Position = UDim2.new(0, tabWidth + 14, 0, 0),
         Size = UDim2.new(1, -tabWidth - 14, 1, 0),
         Parent = body,
+    }, {
+        corner(Tokens.Radius.Lg),
+        stroke(Tokens.Color.BorderSoft, 0.22, 1),
+        gradient({ Tokens.Color.Panel, Tokens.Color.PanelSunken }, 90),
+    })
+
+    local pageHost = create("Frame", {
+        BackgroundTransparency = 1,
+        Position = UDim2.fromOffset(12, 12),
+        Size = UDim2.new(1, -24, 1, -24),
+        Parent = contentPanel,
     })
 
     local notifications = create("Frame", {
@@ -2112,11 +2247,14 @@ local function buildWindow(config)
         Header = header,
         Body = body,
         Sidebar = sidebar,
+        ContentPanel = contentPanel,
         TabList = tabList,
         PageHost = pageHost,
         NotificationHost = notifications,
         LoadingOverlay = loading.Overlay,
         LoadingStatus = loading.Status,
+        LoadingPercent = loading.Percent,
+        LoadingStage = loading.Stage,
         LoadingFill = loading.Fill,
         LoadingSpinner = loading.Spinner,
         LoadingGradient = loading.FillGradient,
@@ -2136,6 +2274,7 @@ local function buildWindow(config)
         Console = console,
         Maid = maid,
         MaxLogs = tonumber(config.MaxLogs) or 250,
+        BootProgress = 0,
         AutoScrollLogs = true,
         LogSearch = "",
         LogEntries = {},
@@ -2264,20 +2403,20 @@ local function buildWindow(config)
         window:Destroy()
     end))
 
-    local minBootTime = tonumber(config.MinBootTime) or 2
+    local minBootTime = tonumber(config.MinBootTime) or 2.7
     local startedAt = os.clock()
 
-    window:_progress(0.06, "Booting " .. Larpter.Name, 0.18)
-    window:_progress(0.18, "Creating interface", 0.2)
-    window:_progress(0.34, "Mounting shell", 0.2)
-    window:_progress(0.54, "Preparing logs", 0.22)
+    window:_progress(0.08, "Resolving session", 0.22)
+    window:_progress(0.22, "Composing shell", 0.28)
+    window:_progress(0.42, "Rendering controls", 0.32)
+    window:_progress(0.58, "Mounting log console", 0.28)
     window:_buildLogTab()
-    window:_progress(0.76, "Binding components", 0.2)
+    window:_progress(0.78, "Binding interactions", 0.32)
     window:Info("LARPTER Premium initialized", {
         version = Larpter.Version,
         maxLogs = window.MaxLogs,
     })
-    window:_progress(0.9, "Finalizing motion", 0.18)
+    window:_progress(0.92, "Finalizing motion", 0.28)
 
     local remaining = minBootTime - (os.clock() - startedAt)
     if remaining > 0 then
@@ -2370,7 +2509,7 @@ end
 function Larpter:CreateDemo(config)
     config = merge({
         Title = "LARPTER Premium",
-        Subtitle = "Production-grade Roblox control surface",
+        Subtitle = "Prism steel Roblox control deck",
         MaxLogs = 200,
     }, config or {})
 
@@ -2386,12 +2525,12 @@ function Larpter:CreateDemo(config)
     local overview = dashboard:AddSection("Overview")
     overview:AddParagraph({
         Title = "Production rebuild",
-        Content = "Graphite premium interface with cleaner runtime structure, animated boot, duplicate guard, and a log-first workflow.",
+        Content = "New prism steel shell, animated console boot, duplicate guard, and a log-first workflow.",
     })
     overview:AddDivider({ Title = "Runtime" })
     overview:AddParagraph({
-        Title = "Theme system",
-        Content = "Use Larpter:SetTheme({...}) or CreateWindow({ Theme = {...} }) before mounting custom surfaces.",
+        Title = "Boot console",
+        Content = "Executor consoles get a single-line animated boot. Roblox Developer Console fallback stays compact.",
     })
 
     local actions = dashboard:AddSection("Quick Actions")
