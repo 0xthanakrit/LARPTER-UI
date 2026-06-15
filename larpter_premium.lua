@@ -399,18 +399,24 @@ end
 local function button(parent, props, children)
     props = props or {}
 
+    local animate = props.Animate ~= false
+    local normal = props.BackgroundColor3
+    local hover = props.HoverColor or Tokens.Color.CardHover
+    local press = props.PressColor or Tokens.Color.Blue
+    local instanceProps = merge({}, props)
+
+    instanceProps.Animate = nil
+    instanceProps.HoverColor = nil
+    instanceProps.PressColor = nil
+
     local object = create("TextButton", merge({
         AutoButtonColor = false,
         Text = "",
         BorderSizePixel = 0,
         Parent = parent,
-    }, props), children)
+    }, instanceProps), children)
 
-    if props.Animate ~= false then
-        local normal = props.BackgroundColor3
-        local hover = props.HoverColor or Tokens.Color.CardHover
-        local press = props.PressColor or Tokens.Color.Blue
-
+    if animate then
         object.MouseEnter:Connect(function()
             if normal then
                 tween(object, { BackgroundColor3 = hover }, Tokens.Motion.Fast)
