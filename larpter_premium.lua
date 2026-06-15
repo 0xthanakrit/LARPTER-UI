@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 5.1.1
+    Version 5.1.2
 
     Production-oriented single-file Roblox UI framework:
     - Linoria-inspired compact control surface
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "5.1.1",
+    Version = "5.1.2",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -35,27 +35,27 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Shell = Color3.fromRGB(58, 62, 73),
-        ShellTop = Color3.fromRGB(72, 78, 91),
-        ShellBottom = Color3.fromRGB(50, 54, 65),
-        Panel = Color3.fromRGB(62, 67, 80),
-        PanelRaised = Color3.fromRGB(78, 84, 99),
-        PanelSunken = Color3.fromRGB(49, 54, 66),
-        Card = Color3.fromRGB(68, 74, 88),
-        CardHover = Color3.fromRGB(86, 94, 111),
-        Border = Color3.fromRGB(124, 137, 160),
-        BorderSoft = Color3.fromRGB(94, 106, 128),
-        BorderHot = Color3.fromRGB(130, 162, 255),
-        Blue = Color3.fromRGB(103, 146, 255),
-        BlueSoft = Color3.fromRGB(194, 209, 255),
-        BlueDim = Color3.fromRGB(77, 103, 184),
+        Shell = Color3.fromRGB(76, 82, 96),
+        ShellTop = Color3.fromRGB(92, 100, 116),
+        ShellBottom = Color3.fromRGB(64, 70, 84),
+        Panel = Color3.fromRGB(84, 91, 108),
+        PanelRaised = Color3.fromRGB(98, 106, 125),
+        PanelSunken = Color3.fromRGB(70, 77, 93),
+        Card = Color3.fromRGB(91, 99, 117),
+        CardHover = Color3.fromRGB(108, 118, 138),
+        Border = Color3.fromRGB(152, 166, 194),
+        BorderSoft = Color3.fromRGB(121, 135, 162),
+        BorderHot = Color3.fromRGB(155, 181, 255),
+        Blue = Color3.fromRGB(82, 123, 255),
+        BlueSoft = Color3.fromRGB(205, 217, 255),
+        BlueDim = Color3.fromRGB(76, 104, 190),
         Mint = Color3.fromRGB(104, 230, 186),
         Gold = Color3.fromRGB(246, 198, 112),
         Rose = Color3.fromRGB(250, 105, 141),
         Text = Color3.fromRGB(255, 255, 255),
-        TextMuted = Color3.fromRGB(232, 238, 247),
-        TextFaint = Color3.fromRGB(190, 201, 218),
-        BlackText = Color3.fromRGB(17, 22, 32),
+        TextMuted = Color3.fromRGB(246, 249, 255),
+        TextFaint = Color3.fromRGB(225, 232, 244),
+        BlackText = Color3.fromRGB(255, 255, 255),
         Red = Color3.fromRGB(250, 105, 141),
         Amber = Color3.fromRGB(246, 198, 112),
         Violet = Color3.fromRGB(191, 176, 255),
@@ -344,11 +344,11 @@ local function textBase(text, size, color, bold)
         Text = text or "",
         TextSize = size or 13,
         TextColor3 = color or Tokens.Color.Text,
-        Font = Enum.Font.Code,
+        Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Center,
         TextStrokeColor3 = Color3.fromRGB(4, 6, 10),
-        TextStrokeTransparency = 0.82,
+        TextStrokeTransparency = 0.55,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
     }
@@ -823,7 +823,7 @@ function Section:AddButton(config)
         Text = string.upper(config.ButtonText or "Run"),
         TextColor3 = Tokens.Color.BlackText,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -90, 0.5, -12),
         Size = UDim2.fromOffset(78, 24),
     }, {
@@ -1026,7 +1026,7 @@ function Section:AddDropdown(config)
         Text = asString(selected),
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left,
         Position = UDim2.new(1, -142, 0.5, -12),
         Size = UDim2.fromOffset(130, 24),
@@ -1070,7 +1070,7 @@ function Section:AddDropdown(config)
                 Text = asString(option),
                 TextColor3 = isSelected and Tokens.Color.BlueSoft or Tokens.Color.Text,
                 TextSize = 12,
-                Font = Enum.Font.Code,
+                Font = Enum.Font.Gotham,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Size = UDim2.new(1, 0, 0, 28),
             }, {
@@ -1147,7 +1147,7 @@ function Section:AddInput(config)
         TextColor3 = Tokens.Color.Text,
         PlaceholderColor3 = Tokens.Color.TextFaint,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.Gotham,
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
@@ -1218,7 +1218,7 @@ function Section:AddKeybind(config)
         Text = bind.Name,
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -126, 0.5, -12),
         Size = UDim2.fromOffset(114, 24),
     }, {
@@ -1578,7 +1578,7 @@ function Window:_logRow(entry)
     }))
 
     text(row, merge(textBase(entry.Message, 12, Tokens.Color.Text), {
-        Font = Enum.Font.Code,
+        Font = Enum.Font.Gotham,
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         TextWrapped = true,
@@ -1586,7 +1586,7 @@ function Window:_logRow(entry)
 
     local meta = metaString(entry.Meta)
     text(row, merge(textBase(meta, 11, Tokens.Color.TextFaint), {
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Size = UDim2.new(1, 0, 0, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         TextWrapped = true,
@@ -1649,7 +1649,7 @@ function Window:_buildLogTab()
         TextColor3 = Tokens.Color.Text,
         PlaceholderColor3 = Tokens.Color.TextFaint,
         TextSize = 12,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
@@ -1667,7 +1667,7 @@ function Window:_buildLogTab()
         Text = "AUTO",
         TextColor3 = Tokens.Color.BlackText,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -250, 0, 30),
         Size = UDim2.fromOffset(62, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1677,7 +1677,7 @@ function Window:_buildLogTab()
         Text = "COPY",
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -180, 0, 30),
         Size = UDim2.fromOffset(78, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1687,7 +1687,7 @@ function Window:_buildLogTab()
         Text = "CLEAR",
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -94, 0, 30),
         Size = UDim2.fromOffset(94, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1708,7 +1708,7 @@ function Window:_buildLogTab()
             Text = style.Label,
             TextColor3 = Tokens.Color.BlackText,
             TextSize = 10,
-            Font = Enum.Font.Code,
+            Font = Enum.Font.GothamBold,
             Size = UDim2.fromOffset(58, 26),
         }, { corner(Tokens.Radius.Sm) })
 
@@ -2251,7 +2251,7 @@ local function buildWindow(config)
         Text = "-",
         TextColor3 = Tokens.Color.Text,
         TextSize = 14,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -76, 0, 13),
         Size = UDim2.fromOffset(28, 24),
     }, { corner(Tokens.Radius.Md) })
@@ -2261,7 +2261,7 @@ local function buildWindow(config)
         Text = "X",
         TextColor3 = Tokens.Color.Text,
         TextSize = 12,
-        Font = Enum.Font.Code,
+        Font = Enum.Font.GothamBold,
         Position = UDim2.new(1, -40, 0, 13),
         Size = UDim2.fromOffset(28, 24),
     }, { corner(Tokens.Radius.Md) })
