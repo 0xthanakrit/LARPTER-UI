@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 5.0.0
+    Version 5.1.0
 
     Production-oriented single-file Roblox UI framework:
     - Linoria-inspired compact control surface
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "5.0.0",
+    Version = "5.1.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -202,8 +202,44 @@ local function keyCode(value, fallback)
     return fallback
 end
 
-local function getGuiParent()
-    if type(gethui) == "function" then
+local function normalizeConfig(config)
+    config = config or {}
+
+    if config.SafeMode ~= false then
+        config.SafeMode = true
+
+        if config.PreventDuplicate == nil then
+            config.PreventDuplicate = true
+        end
+
+        if config.ForceReload == nil then
+            config.ForceReload = false
+        end
+
+        if config.ConsoleLoading == nil then
+            config.ConsoleLoading = "developer"
+        end
+
+        if config.MaxLogs == nil then
+            config.MaxLogs = 200
+        end
+
+        if config.ProtectGui == nil then
+            config.ProtectGui = false
+        end
+    end
+
+    return config
+end
+
+local function getGuiParent(config)
+    config = config or {}
+
+    if config.GuiParent == "PlayerGui" and LocalPlayer then
+        return LocalPlayer:WaitForChild("PlayerGui")
+    end
+
+    if config.GuiParent ~= "CoreGui" and type(gethui) == "function" then
         local ok, hui = pcall(gethui)
         if ok and hui then
             return hui
@@ -225,7 +261,11 @@ local function getGuiParent()
     return nil
 end
 
-local function protectGui(gui)
+local function protectGui(gui, enabled)
+    if not enabled then
+        return
+    end
+
     if type(syn) == "table" and type(syn.protect_gui) == "function" then
         pcall(syn.protect_gui, gui)
     elseif type(protectgui) == "function" then
@@ -2085,9 +2125,9 @@ local function loadingView(root)
 end
 
 local function buildWindow(config)
-    config = config or {}
+    config = normalizeConfig(config)
 
-    local parent = getGuiParent()
+    local parent = getGuiParent(config)
     assert(parent, "LARPTER Premium could not find a GUI parent")
 
     local gui = create("ScreenGui", {
@@ -2096,7 +2136,7 @@ local function buildWindow(config)
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         Parent = parent,
     })
-    protectGui(gui)
+    protectGui(gui, config.ProtectGui == true)
 
     local maid = Maid.new()
     local console = Console.new(config.ConsoleLoading)
@@ -2449,6 +2489,13 @@ local function buildWindow(config)
         version = Larpter.Version,
         maxLogs = window.MaxLogs,
     })
+    if config.SafeMode then
+        window:Info("Safe mode active", {
+            duplicateGuard = config.PreventDuplicate ~= false,
+            protectGui = config.ProtectGui == true,
+            console = config.ConsoleLoading or "developer",
+        })
+    end
     window:_progress(0.92, "Finalizing motion", 0.28)
 
     local remaining = minBootTime - (os.clock() - startedAt)
@@ -2461,7 +2508,7 @@ local function buildWindow(config)
 end
 
 function Larpter:CreateWindow(config)
-    config = config or {}
+    config = normalizeConfig(config)
     applyTheme(config.Theme)
 
     local state = getState()
@@ -2540,11 +2587,11 @@ function Larpter:GetTheme()
 end
 
 function Larpter:CreateDemo(config)
-    config = merge({
+    config = normalizeConfig(merge({
         Title = "LARPTER Premium",
         Subtitle = "Linoria-inspired control surface",
         MaxLogs = 200,
-    }, config or {})
+    }, config or {}))
 
     local window = self:CreateWindow(config)
 
