@@ -375,6 +375,8 @@ function Console.new(option)
         mode = "verbose"
     elseif option == "compact" then
         mode = "compact"
+    elseif option == "developer" or option == "devconsole" or option == "f9" then
+        mode = "developer"
     elseif option == "silent" then
         mode = "silent"
     end
@@ -415,6 +417,16 @@ function Console:_line(progress, message)
     )
 end
 
+function Console:_developerLine(progress, message)
+    local percent = math.floor(progress * 100 + 0.5)
+    return string.format(
+        "[LARPTER] %3d%% [%s] %s",
+        percent,
+        self:_bar(progress),
+        message or "Loading"
+    )
+end
+
 function Console:Progress(progress, message, force)
     if self.Mode == "silent" then
         return
@@ -439,6 +451,28 @@ function Console:Progress(progress, message, force)
             print(line)
         elseif progress >= 1 or force then
             print(line)
+        end
+
+        return
+    end
+
+    if self.Mode == "developer" then
+        if not self.PrintedStart then
+            self.PrintedStart = true
+            print(string.format("[LARPTER] boot session %s started", self.Session))
+        end
+
+        local bucket = math.floor(progress * 8)
+        local shouldPrint = force or progress >= 1 or message ~= self.LastMessage or bucket ~= self.LastBucket
+
+        if shouldPrint then
+            print(self:_developerLine(progress, message))
+            self.LastBucket = bucket
+            self.LastMessage = message
+        end
+
+        if progress >= 1 or force == "done" then
+            print(string.format("[LARPTER] ready in %.1fs", os.clock() - self.StartedAt))
         end
 
         return
