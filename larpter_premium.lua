@@ -1,9 +1,9 @@
 --[[
     LARPTER Premium UI Framework
-    Version 3.0.1
+    Version 3.1.0
 
     Production-oriented single-file Roblox UI framework:
-    - matte charcoal / blue design system
+    - graphite / electric-blue design system
     - deterministic cleanup
     - duplicate-load guard
     - boot overlay with real timing and motion
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "3.0.1",
+    Version = "3.1.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -35,25 +35,28 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Shell = Color3.fromRGB(39, 42, 50),
-        ShellBottom = Color3.fromRGB(29, 31, 38),
-        Panel = Color3.fromRGB(46, 50, 60),
-        PanelRaised = Color3.fromRGB(56, 62, 76),
-        PanelSunken = Color3.fromRGB(35, 38, 46),
-        Card = Color3.fromRGB(51, 56, 68),
-        CardHover = Color3.fromRGB(63, 71, 88),
-        Border = Color3.fromRGB(84, 96, 121),
-        BorderHot = Color3.fromRGB(83, 139, 225),
-        Blue = Color3.fromRGB(61, 139, 255),
-        BlueSoft = Color3.fromRGB(136, 193, 255),
-        BlueDim = Color3.fromRGB(38, 78, 142),
+        Shell = Color3.fromRGB(52, 58, 70),
+        ShellTop = Color3.fromRGB(64, 72, 86),
+        ShellBottom = Color3.fromRGB(42, 48, 60),
+        Panel = Color3.fromRGB(61, 69, 83),
+        PanelRaised = Color3.fromRGB(72, 82, 99),
+        PanelSunken = Color3.fromRGB(49, 56, 69),
+        Card = Color3.fromRGB(67, 76, 93),
+        CardHover = Color3.fromRGB(79, 91, 112),
+        Border = Color3.fromRGB(105, 123, 151),
+        BorderSoft = Color3.fromRGB(83, 98, 123),
+        BorderHot = Color3.fromRGB(91, 157, 255),
+        Blue = Color3.fromRGB(74, 149, 255),
+        BlueSoft = Color3.fromRGB(156, 207, 255),
+        BlueDim = Color3.fromRGB(54, 102, 170),
+        Mint = Color3.fromRGB(91, 221, 183),
         Text = Color3.fromRGB(248, 250, 255),
-        TextMuted = Color3.fromRGB(204, 214, 230),
-        TextFaint = Color3.fromRGB(148, 162, 183),
-        BlackText = Color3.fromRGB(12, 16, 24),
+        TextMuted = Color3.fromRGB(218, 226, 238),
+        TextFaint = Color3.fromRGB(168, 181, 202),
+        BlackText = Color3.fromRGB(14, 24, 38),
         Red = Color3.fromRGB(255, 84, 112),
         Amber = Color3.fromRGB(255, 193, 96),
-        Violet = Color3.fromRGB(145, 174, 255),
+        Violet = Color3.fromRGB(166, 185, 255),
     },
     Radius = {
         Sm = 6,
@@ -78,7 +81,31 @@ local LogLevels = {
 
 local LogLevelOrder = { "info", "success", "warn", "error", "debug" }
 
+local function syncLogLevelColors()
+    LogLevels.info.Color = Tokens.Color.Blue
+    LogLevels.success.Color = Tokens.Color.Mint
+    LogLevels.warn.Color = Tokens.Color.Amber
+    LogLevels.error.Color = Tokens.Color.Red
+    LogLevels.debug.Color = Tokens.Color.Violet
+end
+
+syncLogLevelColors()
+
 local function noop() end
+
+local function applyTheme(theme)
+    if type(theme) ~= "table" then
+        return
+    end
+
+    for key, value in pairs(theme) do
+        if Tokens.Color[key] ~= nil and typeof(value) == "Color3" then
+            Tokens.Color[key] = value
+        end
+    end
+
+    syncLogLevelColors()
+end
 
 local function getState()
     local env = _G
@@ -628,6 +655,48 @@ function Section:AddParagraph(config)
     return object
 end
 
+function Section:AddDivider(config)
+    config = config or {}
+
+    local root = create("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, config.Title and 28 or 16),
+        Parent = self.Content,
+    })
+
+    local line = create("Frame", {
+        AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundColor3 = Tokens.Color.BorderSoft,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0.5, 0),
+        Size = UDim2.new(1, 0, 0, 1),
+        Parent = root,
+    })
+
+    if config.Title then
+        local label = text(root, merge(textBase(string.upper(config.Title), 10, Tokens.Color.TextFaint, true), {
+            BackgroundColor3 = Tokens.Color.Panel,
+            BackgroundTransparency = 0,
+            Position = UDim2.fromOffset(12, 4),
+            Size = UDim2.fromOffset(132, 20),
+            TextXAlignment = Enum.TextXAlignment.Center,
+        }))
+        corner(10).Parent = label
+        stroke(Tokens.Color.BorderSoft, 0.35, 1).Parent = label
+    end
+
+    local object = {
+        Root = root,
+        Line = line,
+    }
+
+    function object:Destroy()
+        self.Root:Destroy()
+    end
+
+    return object
+end
+
 function Section:AddButton(config)
     config = config or {}
 
@@ -1134,6 +1203,7 @@ end
 
 for _, method in ipairs({
     "AddParagraph",
+    "AddDivider",
     "AddButton",
     "AddToggle",
     "AddSlider",
@@ -1153,7 +1223,7 @@ function Window:_progress(progress, label, waitTime)
 
     progress = clamp(progress or 0, 0, 1)
     self.Console:Progress(progress, label)
-    self.LoadingStatus.Text = label or "Loading"
+    self.LoadingStatus.Text = string.format("%s  %d%%", label or "Loading", math.floor(progress * 100 + 0.5))
     tween(self.LoadingFill, { Size = UDim2.fromScale(progress, 1) }, Tokens.Motion.Base)
     task.wait(waitTime or 0.18)
 end
@@ -1165,6 +1235,7 @@ function Window:_finishBoot()
 
     self.Console:Progress(1, "Ready", "done")
     self.LoadingStatus.Text = "Ready"
+    self:SetStatus("Ready", "success")
     tween(self.LoadingFill, { Size = UDim2.fromScale(1, 1) }, Tokens.Motion.Base)
     tween(self.RootScale, { Scale = 1 }, Tokens.Motion.Slow, Enum.EasingStyle.Back)
     tween(self.Root, { Position = UDim2.fromScale(0.5, 0.5) }, Tokens.Motion.Slow)
@@ -1599,6 +1670,25 @@ function Window:CopyLatestLog()
     return false
 end
 
+function Window:SetStatus(message, level)
+    if self.Destroyed or not self.StatusLabel then
+        return
+    end
+
+    local style = LogLevels[string.lower(asString(level or "info"))] or LogLevels.info
+    self.StatusLabel.Text = string.upper(asString(message ~= nil and message or "Ready"))
+    self.StatusDot.BackgroundColor3 = style.Color
+    self.StatusLabel.TextColor3 = style.Color
+end
+
+function Window:ShowLogs()
+    if self.LogTab then
+        self:SelectTab(self.LogTab)
+    end
+
+    return self
+end
+
 function Window:Notify(config)
     if self.Destroyed then
         return nil
@@ -1699,7 +1789,7 @@ end
 local function loadingView(root)
     local overlay = create("CanvasGroup", {
         BackgroundColor3 = Tokens.Color.Shell,
-        BackgroundTransparency = 0.03,
+        BackgroundTransparency = 0,
         BorderSizePixel = 0,
         GroupTransparency = 0,
         Size = UDim2.fromScale(1, 1),
@@ -1707,14 +1797,15 @@ local function loadingView(root)
         Parent = root,
     }, {
         corner(Tokens.Radius.Xl),
+        gradient({ Tokens.Color.ShellTop, Tokens.Color.ShellBottom }, 90),
     })
 
     local card = create("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Tokens.Color.Panel,
+        BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(380, 162),
+        Size = UDim2.fromOffset(420, 170),
         ZIndex = 91,
         Parent = overlay,
     }, {
@@ -1723,7 +1814,7 @@ local function loadingView(root)
         list(Enum.FillDirection.Vertical, 9),
     })
 
-    local cardStroke = stroke(Tokens.Color.BorderHot, 0.1, 1)
+    local cardStroke = stroke(Tokens.Color.BorderHot, 0.14, 1)
     cardStroke.Parent = card
 
     local cardScale = create("UIScale", {
@@ -1738,7 +1829,7 @@ local function loadingView(root)
         Parent = card,
     })
 
-    text(header, merge(textBase("LARPTER PREMIUM", 16, Tokens.Color.Text, true), {
+    text(header, merge(textBase("LARPTER PREMIUM", 16, Tokens.Color.BlueSoft, true), {
         Size = UDim2.new(1, -44, 1, 0),
         ZIndex = 93,
     }))
@@ -1802,7 +1893,7 @@ local function loadingView(root)
     fillGradient.Offset = Vector2.new(-1, 0)
     fillGradient.Parent = fill
 
-    text(card, merge(textBase("single-line console / motion boot / deterministic cleanup", 10, Tokens.Color.TextFaint, true), {
+    text(card, merge(textBase("LARPTER RUNTIME  " .. Larpter.Version, 10, Tokens.Color.TextFaint, true), {
         Size = UDim2.new(1, 0, 0, 16),
         ZIndex = 92,
     }))
@@ -1849,7 +1940,7 @@ local function buildWindow(config)
     }, {
         corner(Tokens.Radius.Xl),
         stroke(Tokens.Color.BorderHot, 0.08, 1),
-        gradient({ Color3.fromRGB(58, 63, 76), Tokens.Color.ShellBottom }, 90),
+        gradient({ Tokens.Color.ShellTop, Tokens.Color.ShellBottom }, 90),
     })
 
     local rootScale = create("UIScale", {
@@ -1892,12 +1983,12 @@ local function buildWindow(config)
 
     local title = text(header, merge(textBase(config.Title or Larpter.Name, 17, Tokens.Color.Text, true), {
         Position = UDim2.fromOffset(76, 17),
-        Size = UDim2.new(1, -410, 0, 24),
+        Size = UDim2.new(1, -470, 0, 24),
     }))
 
     local subtitle = text(header, merge(textBase(config.Subtitle or "Production-grade control surface", 12, Tokens.Color.TextMuted), {
         Position = UDim2.fromOffset(76, 44),
-        Size = UDim2.new(1, -430, 0, 18),
+        Size = UDim2.new(1, -470, 0, 18),
     }))
 
     local activeLabel = text(header, merge(textBase("ACTIVE", 11, Tokens.Color.TextMuted, true), {
@@ -1909,6 +2000,33 @@ local function buildWindow(config)
     }))
     corner(15).Parent = activeLabel
     stroke(Tokens.Color.Border, 0.3, 1).Parent = activeLabel
+
+    local statusBar = create("Frame", {
+        BackgroundColor3 = Tokens.Color.PanelSunken,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -324, 0, 61),
+        Size = UDim2.fromOffset(184, 17),
+        Parent = header,
+    }, {
+        corner(9),
+        stroke(Tokens.Color.BorderSoft, 0.38, 1),
+    })
+
+    local statusDot = create("Frame", {
+        BackgroundColor3 = Tokens.Color.Mint,
+        BorderSizePixel = 0,
+        Position = UDim2.fromOffset(10, 5),
+        Size = UDim2.fromOffset(7, 7),
+        Parent = statusBar,
+    }, {
+        corner(4),
+    })
+
+    local statusLabel = text(statusBar, merge(textBase("READY", 10, Tokens.Color.TextMuted, true), {
+        Position = UDim2.fromOffset(24, 0),
+        Size = UDim2.new(1, -32, 1, 0),
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    }))
 
     local minimize = button(header, {
         BackgroundColor3 = Tokens.Color.PanelRaised,
@@ -2007,6 +2125,9 @@ local function buildWindow(config)
         MinimizeButton = minimize,
         CloseButton = close,
         ActiveLabel = activeLabel,
+        StatusBar = statusBar,
+        StatusDot = statusDot,
+        StatusLabel = statusLabel,
         TitleLabel = title,
         SubtitleLabel = subtitle,
         Title = config.Title or Larpter.Name,
@@ -2169,6 +2290,7 @@ end
 
 function Larpter:CreateWindow(config)
     config = config or {}
+    applyTheme(config.Theme)
 
     local state = getState()
     local active = state.ActiveWindow
@@ -2236,6 +2358,15 @@ function Larpter:DestroyActive()
     return false
 end
 
+function Larpter:SetTheme(theme)
+    applyTheme(theme)
+    return self
+end
+
+function Larpter:GetTheme()
+    return merge({}, Tokens.Color)
+end
+
 function Larpter:CreateDemo(config)
     config = merge({
         Title = "LARPTER Premium",
@@ -2255,7 +2386,12 @@ function Larpter:CreateDemo(config)
     local overview = dashboard:AddSection("Overview")
     overview:AddParagraph({
         Title = "Production rebuild",
-        Content = "Stable internal architecture, deterministic cleanup, animated boot, duplicate guard, and a log-first workflow.",
+        Content = "Graphite premium interface with cleaner runtime structure, animated boot, duplicate guard, and a log-first workflow.",
+    })
+    overview:AddDivider({ Title = "Runtime" })
+    overview:AddParagraph({
+        Title = "Theme system",
+        Content = "Use Larpter:SetTheme({...}) or CreateWindow({ Theme = {...} }) before mounting custom surfaces.",
     })
 
     local actions = dashboard:AddSection("Quick Actions")
@@ -2263,6 +2399,7 @@ function Larpter:CreateDemo(config)
         Title = "Write success log",
         Description = "Adds a styled entry to the console",
         Callback = function()
+            window:SetStatus("Action complete", "success")
             window:Success("Demo action completed", { source = "button" })
             window:Notify({
                 Title = "Action complete",
@@ -2272,11 +2409,22 @@ function Larpter:CreateDemo(config)
         end,
     })
 
+    actions:AddButton({
+        Title = "Open log console",
+        Description = "Switches to the built-in log viewer",
+        ButtonText = "Logs",
+        Callback = function()
+            window:SetStatus("Viewing logs", "info")
+            window:ShowLogs()
+        end,
+    })
+
     actions:AddToggle({
         Title = "Enable module",
         Description = "Smooth toggle with callback logging",
         Default = false,
         Callback = function(value)
+            window:SetStatus(value and "Module enabled" or "Module disabled", value and "success" or "warn")
             window:Info("Module toggled", { enabled = value })
         end,
     })
