@@ -6,7 +6,7 @@ local LIBRARY_URL = "https://raw.githubusercontent.com/0xthanakrit/LARPTER-UI/ma
 
 local OPTIONS = {
     Title = "LARPTER Premium",
-    Subtitle = "Prism steel Roblox control deck",
+    Subtitle = "Linoria-inspired control surface",
     ConsoleLoading = "line",
     MinBootTime = 2.8,
     PreventDuplicate = true,

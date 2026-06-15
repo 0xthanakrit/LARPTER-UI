@@ -1,9 +1,9 @@
 --[[
     LARPTER Premium UI Framework
-    Version 4.0.0
+    Version 5.0.0
 
     Production-oriented single-file Roblox UI framework:
-    - prism steel / glass control surface
+    - Linoria-inspired compact control surface
     - deterministic cleanup
     - duplicate-load guard
     - boot overlay with real timing and motion
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "4.0.0",
+    Version = "5.0.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -35,36 +35,36 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Shell = Color3.fromRGB(45, 49, 60),
-        ShellTop = Color3.fromRGB(78, 76, 96),
-        ShellBottom = Color3.fromRGB(39, 44, 54),
-        Panel = Color3.fromRGB(57, 63, 77),
-        PanelRaised = Color3.fromRGB(72, 79, 96),
-        PanelSunken = Color3.fromRGB(46, 52, 64),
-        Card = Color3.fromRGB(65, 72, 88),
-        CardHover = Color3.fromRGB(82, 90, 110),
-        Border = Color3.fromRGB(110, 121, 145),
-        BorderSoft = Color3.fromRGB(87, 97, 118),
-        BorderHot = Color3.fromRGB(153, 135, 255),
-        Blue = Color3.fromRGB(105, 218, 255),
-        BlueSoft = Color3.fromRGB(196, 238, 255),
-        BlueDim = Color3.fromRGB(50, 126, 160),
-        Mint = Color3.fromRGB(101, 235, 184),
-        Gold = Color3.fromRGB(255, 201, 112),
-        Rose = Color3.fromRGB(255, 114, 151),
-        Text = Color3.fromRGB(248, 250, 255),
-        TextMuted = Color3.fromRGB(222, 229, 240),
-        TextFaint = Color3.fromRGB(171, 183, 203),
-        BlackText = Color3.fromRGB(20, 27, 39),
-        Red = Color3.fromRGB(255, 114, 151),
-        Amber = Color3.fromRGB(255, 201, 112),
-        Violet = Color3.fromRGB(181, 169, 255),
+        Shell = Color3.fromRGB(31, 34, 41),
+        ShellTop = Color3.fromRGB(41, 45, 54),
+        ShellBottom = Color3.fromRGB(25, 28, 34),
+        Panel = Color3.fromRGB(35, 38, 46),
+        PanelRaised = Color3.fromRGB(44, 48, 58),
+        PanelSunken = Color3.fromRGB(27, 30, 36),
+        Card = Color3.fromRGB(39, 43, 52),
+        CardHover = Color3.fromRGB(50, 55, 66),
+        Border = Color3.fromRGB(74, 80, 94),
+        BorderSoft = Color3.fromRGB(55, 60, 72),
+        BorderHot = Color3.fromRGB(117, 145, 255),
+        Blue = Color3.fromRGB(92, 125, 255),
+        BlueSoft = Color3.fromRGB(157, 177, 255),
+        BlueDim = Color3.fromRGB(49, 69, 135),
+        Mint = Color3.fromRGB(88, 212, 172),
+        Gold = Color3.fromRGB(234, 184, 98),
+        Rose = Color3.fromRGB(239, 93, 128),
+        Text = Color3.fromRGB(236, 240, 248),
+        TextMuted = Color3.fromRGB(196, 205, 222),
+        TextFaint = Color3.fromRGB(139, 150, 171),
+        BlackText = Color3.fromRGB(16, 19, 25),
+        Red = Color3.fromRGB(239, 93, 128),
+        Amber = Color3.fromRGB(234, 184, 98),
+        Violet = Color3.fromRGB(172, 153, 255),
     },
     Radius = {
-        Sm = 6,
-        Md = 9,
-        Lg = 13,
-        Xl = 18,
+        Sm = 2,
+        Md = 3,
+        Lg = 4,
+        Xl = 5,
     },
     Motion = {
         Fast = 0.12,
@@ -304,7 +304,7 @@ local function textBase(text, size, color, bold)
         Text = text or "",
         TextSize = size or 13,
         TextColor3 = color or Tokens.Color.Text,
-        Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham,
+        Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Center,
         BackgroundTransparency = 1,
@@ -564,7 +564,7 @@ local function component(section, config, height)
         Active = true,
         BackgroundColor3 = Tokens.Color.Card,
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, height or 66),
+        Size = UDim2.new(1, 0, 0, height or 54),
         Parent = section.Content,
     }, {
         corner(Tokens.Radius.Md),
@@ -576,22 +576,22 @@ local function component(section, config, height)
     create("Frame", {
         BackgroundColor3 = Tokens.Color.BlueDim,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 12),
-        Size = UDim2.new(0, 3, 1, -24),
+        Position = UDim2.fromOffset(0, 9),
+        Size = UDim2.new(0, 2, 1, -18),
         Parent = root,
     }, {
         corner(4),
     })
 
-    local title = text(root, merge(textBase(config.Title or "Untitled", 13, Tokens.Color.Text, true), {
-        Position = UDim2.fromOffset(17, 11),
-        Size = UDim2.new(1, -220, 0, 19),
+    local title = text(root, merge(textBase(config.Title or "Untitled", 12, Tokens.Color.Text, true), {
+        Position = UDim2.fromOffset(12, 7),
+        Size = UDim2.new(1, -178, 0, 17),
         TextTruncate = Enum.TextTruncate.AtEnd,
     }))
 
-    local desc = text(root, merge(textBase(config.Description or "", 12, Tokens.Color.TextMuted), {
-        Position = UDim2.fromOffset(17, 35),
-        Size = UDim2.new(1, -220, 0, 18),
+    local desc = text(root, merge(textBase(config.Description or "", 11, Tokens.Color.TextMuted), {
+        Position = UDim2.fromOffset(12, 27),
+        Size = UDim2.new(1, -178, 0, 16),
         TextTruncate = Enum.TextTruncate.AtEnd,
         Visible = config.Description ~= nil and config.Description ~= "",
     }))
@@ -735,7 +735,7 @@ end
 function Section:AddButton(config)
     config = config or {}
 
-    local item = component(self, config, 66)
+    local item = component(self, config, 54)
     local busy = false
 
     local action = button(item.Root, {
@@ -744,10 +744,10 @@ function Section:AddButton(config)
         PressColor = Tokens.Color.BorderHot,
         Text = string.upper(config.ButtonText or "Run"),
         TextColor3 = Tokens.Color.BlackText,
-        TextSize = 12,
-        Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -106, 0.5, -16),
-        Size = UDim2.fromOffset(90, 32),
+        TextSize = 11,
+        Font = Enum.Font.Code,
+        Position = UDim2.new(1, -90, 0.5, -12),
+        Size = UDim2.fromOffset(78, 24),
     }, {
         corner(Tokens.Radius.Md),
         gradient({ Tokens.Color.Blue, Tokens.Color.BlueSoft }, 0),
@@ -759,13 +759,13 @@ function Section:AddButton(config)
         end
 
         busy = true
-        tween(action, { Size = UDim2.fromOffset(84, 30), Position = UDim2.new(1, -103, 0.5, -15) }, 0.08)
+        tween(action, { Size = UDim2.fromOffset(74, 22), Position = UDim2.new(1, -88, 0.5, -11) }, 0.08)
         safeCall(config.Callback or noop)
 
         task.delay(tonumber(config.Cooldown) or 0.18, function()
             if action and action.Parent then
                 busy = false
-                tween(action, { Size = UDim2.fromOffset(90, 32), Position = UDim2.new(1, -106, 0.5, -16) }, 0.12)
+                tween(action, { Size = UDim2.fromOffset(78, 24), Position = UDim2.new(1, -90, 0.5, -12) }, 0.12)
             end
         end)
     end)
@@ -777,28 +777,28 @@ end
 function Section:AddToggle(config)
     config = config or {}
 
-    local item = component(self, config, 66)
+    local item = component(self, config, 54)
     local value = config.Default == true
 
     local track = button(item.Root, {
         BackgroundColor3 = value and Tokens.Color.Blue or Tokens.Color.PanelRaised,
         HoverColor = value and Tokens.Color.BlueSoft or Tokens.Color.CardHover,
         PressColor = Tokens.Color.Blue,
-        Position = UDim2.new(1, -68, 0.5, -14),
-        Size = UDim2.fromOffset(52, 28),
+        Position = UDim2.new(1, -56, 0.5, -10),
+        Size = UDim2.fromOffset(44, 20),
     }, {
-        corner(14),
+        corner(10),
         stroke(Tokens.Color.Border, 0.25, 1),
     })
 
     local knob = create("Frame", {
         BackgroundColor3 = Tokens.Color.Text,
         BorderSizePixel = 0,
-        Position = value and UDim2.fromOffset(27, 4) or UDim2.fromOffset(4, 4),
-        Size = UDim2.fromOffset(20, 20),
+        Position = value and UDim2.fromOffset(25, 3) or UDim2.fromOffset(3, 3),
+        Size = UDim2.fromOffset(14, 14),
         Parent = track,
     }, {
-        corner(10),
+        corner(7),
     })
 
     function item:GetValue()
@@ -808,7 +808,7 @@ function Section:AddToggle(config)
     function item:SetValue(nextValue, silent)
         value = nextValue == true
         tween(track, { BackgroundColor3 = value and Tokens.Color.Blue or Tokens.Color.PanelRaised }, Tokens.Motion.Base)
-        tween(knob, { Position = value and UDim2.fromOffset(27, 4) or UDim2.fromOffset(4, 4) }, Tokens.Motion.Base)
+        tween(knob, { Position = value and UDim2.fromOffset(25, 3) or UDim2.fromOffset(3, 3) }, Tokens.Motion.Base)
 
         if not silent then
             safeCall(config.Callback or noop, value)
@@ -833,21 +833,21 @@ function Section:AddSlider(config)
     local suffix = config.Suffix or ""
     local value = clamp(tonumber(config.Default) or min, min, max)
 
-    local item = component(self, config, 80)
-    item.TitleLabel.Size = UDim2.new(1, -250, 0, 19)
-    item.DescriptionLabel.Size = UDim2.new(1, -250, 0, 18)
+    local item = component(self, config, 64)
+    item.TitleLabel.Size = UDim2.new(1, -118, 0, 17)
+    item.DescriptionLabel.Size = UDim2.new(1, -118, 0, 16)
 
-    local valueLabel = text(item.Root, merge(textBase("", 12, Tokens.Color.BlueSoft, true), {
-        Position = UDim2.new(1, -108, 0, 13),
-        Size = UDim2.fromOffset(92, 18),
+    local valueLabel = text(item.Root, merge(textBase("", 11, Tokens.Color.BlueSoft, true), {
+        Position = UDim2.new(1, -76, 0, 7),
+        Size = UDim2.fromOffset(64, 17),
         TextXAlignment = Enum.TextXAlignment.Right,
     }))
 
     local track = button(item.Root, {
         BackgroundColor3 = Tokens.Color.PanelRaised,
         Animate = false,
-        Position = UDim2.new(0, 17, 1, -23),
-        Size = UDim2.new(1, -34, 0, 8),
+        Position = UDim2.new(0, 12, 1, -18),
+        Size = UDim2.new(1, -24, 0, 6),
     }, {
         corner(4),
     })
@@ -867,11 +867,11 @@ function Section:AddSlider(config)
         BackgroundColor3 = Tokens.Color.Text,
         BorderSizePixel = 0,
         Position = UDim2.fromScale(0, 0.5),
-        Size = UDim2.fromOffset(17, 17),
+        Size = UDim2.fromOffset(13, 13),
         Parent = track,
     }, {
-        corner(9),
-        stroke(Tokens.Color.Blue, 0, 2),
+        corner(7),
+        stroke(Tokens.Color.Blue, 0, 1),
     })
 
     local dragging = false
@@ -940,26 +940,26 @@ function Section:AddDropdown(config)
     local opened = false
     local buttons = {}
 
-    local item = component(self, config, 66)
+    local item = component(self, config, 54)
     item.Root.ClipsDescendants = true
 
     local display = button(item.Root, {
         BackgroundColor3 = Tokens.Color.PanelRaised,
         Text = asString(selected),
         TextColor3 = Tokens.Color.Text,
-        TextSize = 12,
-        Font = Enum.Font.GothamBold,
+        TextSize = 11,
+        Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Left,
-        Position = UDim2.new(1, -194, 0, 17),
-        Size = UDim2.fromOffset(178, 32),
+        Position = UDim2.new(1, -142, 0.5, -12),
+        Size = UDim2.fromOffset(130, 24),
     }, {
         corner(Tokens.Radius.Md),
-        padding(10, 0, 28, 0),
+        padding(7, 0, 22, 0),
     })
 
     local arrow = text(item.Root, merge(textBase("v", 12, Tokens.Color.TextMuted, true), {
-        Position = UDim2.new(1, -44, 0, 23),
-        Size = UDim2.fromOffset(18, 20),
+        Position = UDim2.new(1, -31, 0.5, -9),
+        Size = UDim2.fromOffset(14, 18),
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
 
@@ -967,8 +967,8 @@ function Section:AddDropdown(config)
         BackgroundColor3 = Tokens.Color.Panel,
         BorderSizePixel = 0,
         ClipsDescendants = true,
-        Position = UDim2.fromOffset(17, 66),
-        Size = UDim2.new(1, -34, 0, 0),
+        Position = UDim2.fromOffset(12, 54),
+        Size = UDim2.new(1, -24, 0, 0),
         Visible = false,
         Parent = item.Root,
     }, {
@@ -992,7 +992,7 @@ function Section:AddDropdown(config)
                 Text = asString(option),
                 TextColor3 = isSelected and Tokens.Color.BlueSoft or Tokens.Color.Text,
                 TextSize = 12,
-                Font = isSelected and Enum.Font.GothamBold or Enum.Font.Gotham,
+                Font = Enum.Font.Code,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Size = UDim2.new(1, 0, 0, 28),
             }, {
@@ -1014,9 +1014,9 @@ function Section:AddDropdown(config)
         menu.Visible = true
         arrow.Text = opened and "^" or "v"
 
-        local menuHeight = opened and math.min(#values * 33 + 12, 178) or 0
-        tween(item.Root, { Size = UDim2.new(1, 0, 0, opened and 76 + menuHeight or 66) }, Tokens.Motion.Base)
-        tween(menu, { Size = UDim2.new(1, -34, 0, menuHeight) }, Tokens.Motion.Base)
+        local menuHeight = opened and math.min(#values * 31 + 10, 160) or 0
+        tween(item.Root, { Size = UDim2.new(1, 0, 0, opened and 62 + menuHeight or 54) }, Tokens.Motion.Base)
+        tween(menu, { Size = UDim2.new(1, -24, 0, menuHeight) }, Tokens.Motion.Base)
 
         if not opened then
             task.delay(Tokens.Motion.Base, function()
@@ -1059,7 +1059,7 @@ end
 function Section:AddInput(config)
     config = config or {}
 
-    local item = component(self, config, 66)
+    local item = component(self, config, 54)
     local value = asString(config.Default)
 
     local input = create("TextBox", {
@@ -1068,13 +1068,13 @@ function Section:AddInput(config)
         PlaceholderText = config.Placeholder or "Type...",
         TextColor3 = Tokens.Color.Text,
         PlaceholderColor3 = Tokens.Color.TextFaint,
-        TextSize = 12,
-        Font = Enum.Font.Gotham,
+        TextSize = 11,
+        Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
-        Position = UDim2.new(1, -194, 0.5, -16),
-        Size = UDim2.fromOffset(178, 32),
+        Position = UDim2.new(1, -142, 0.5, -12),
+        Size = UDim2.fromOffset(130, 24),
         Parent = item.Root,
     }, {
         corner(Tokens.Radius.Md),
@@ -1129,7 +1129,7 @@ end
 function Section:AddKeybind(config)
     config = config or {}
 
-    local item = component(self, config, 66)
+    local item = component(self, config, 54)
     local bind = keyCode(config.Default, Enum.KeyCode.RightShift)
     local mode = config.Mode or "Toggle"
     local listening = false
@@ -1139,10 +1139,10 @@ function Section:AddKeybind(config)
         BackgroundColor3 = Tokens.Color.PanelRaised,
         Text = bind.Name,
         TextColor3 = Tokens.Color.Text,
-        TextSize = 12,
-        Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -146, 0.5, -16),
-        Size = UDim2.fromOffset(130, 32),
+        TextSize = 11,
+        Font = Enum.Font.Code,
+        Position = UDim2.new(1, -126, 0.5, -12),
+        Size = UDim2.fromOffset(114, 24),
     }, {
         corner(Tokens.Radius.Md),
         stroke(Tokens.Color.Border, 0.25, 1),
@@ -1199,31 +1199,46 @@ function Section:AddKeybind(config)
 end
 
 function Tab:AddSection(title)
+    local config = type(title) == "table" and title or { Title = title }
+    local sectionTitle = config.Title or config.Name or "Groupbox"
+    local side = config.Side or self.NextSectionSide
+    local parent = self.Page
+
+    if not self.Full then
+        if side == "Right" or side == 2 then
+            parent = self.RightColumn
+            self.NextSectionSide = "Left"
+        else
+            parent = self.LeftColumn
+            self.NextSectionSide = "Right"
+        end
+    end
+
     local root = create("Frame", {
         BackgroundColor3 = Tokens.Color.Panel,
         BorderSizePixel = 0,
         AutomaticSize = Enum.AutomaticSize.Y,
         Size = UDim2.new(1, 0, 0, 0),
-        Parent = self.Page,
+        Parent = parent,
     }, {
         corner(Tokens.Radius.Lg),
-        stroke(Tokens.Color.Border, 0.23, 1),
-        padding(14, 14, 14, 14),
-        list(Enum.FillDirection.Vertical, 11),
+        stroke(Tokens.Color.Border, 0.08, 1),
+        padding(10, 10, 10, 10),
+        list(Enum.FillDirection.Vertical, 8),
     })
 
     local header = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 24),
+        Size = UDim2.new(1, 0, 0, 18),
         Parent = root,
     })
 
-    text(header, merge(textBase(string.upper(title or "Section"), 12, Tokens.Color.BlueSoft, true), {
+    text(header, merge(textBase(sectionTitle, 13, Tokens.Color.Text, true), {
         Size = UDim2.new(1, -90, 1, 0),
     }))
 
-    text(header, merge(textBase("SYSTEM", 10, Tokens.Color.TextFaint, true), {
-        Position = UDim2.new(1, -70, 0, 2),
+    text(header, merge(textBase(config.Badge or "LARPTER", 10, Tokens.Color.TextFaint, true), {
+        Position = UDim2.new(1, -74, 0, 0),
         Size = UDim2.fromOffset(70, 20),
         TextXAlignment = Enum.TextXAlignment.Right,
     }))
@@ -1339,41 +1354,19 @@ function Window:_tabButton(tab)
         end
     end
 
-    local badgeText = tab.Internal and "LG" or string.format("%02d", visibleIndex)
-
     local root = button(self.TabList, {
         BackgroundColor3 = Tokens.Color.Card,
-        BackgroundTransparency = 1,
         Position = UDim2.fromOffset(0, 0),
-        Size = UDim2.new(1, 0, 0, 44),
+        Size = UDim2.fromOffset(math.max(82, (#tab.Title * 8) + 22), 24),
         LayoutOrder = tab.Internal and 999 or visibleIndex,
     }, {
-        corner(Tokens.Radius.Md),
+        corner(Tokens.Radius.Sm),
+        stroke(Tokens.Color.BorderSoft, 0.15, 1),
     })
-
-    local rail = create("Frame", {
-        BackgroundColor3 = Tokens.Color.Blue,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Position = UDim2.fromOffset(0, 12),
-        Size = UDim2.fromOffset(3, 20),
-        Parent = root,
-    }, {
-        corner(4),
-    })
-
-    local badge = text(root, merge(textBase(badgeText, 10, Tokens.Color.TextFaint, true), {
-        BackgroundColor3 = Tokens.Color.PanelRaised,
-        BackgroundTransparency = 0.12,
-        Position = UDim2.fromOffset(11, 10),
-        Size = UDim2.fromOffset(30, 24),
-        TextXAlignment = Enum.TextXAlignment.Center,
-    }))
-    corner(Tokens.Radius.Sm).Parent = badge
 
     local label = text(root, merge(textBase(tab.Title, 13, Tokens.Color.TextMuted, true), {
-        Position = UDim2.fromOffset(50, 0),
-        Size = UDim2.new(1, -58, 1, 0),
+        Size = UDim2.fromScale(1, 1),
+        TextXAlignment = Enum.TextXAlignment.Center,
         TextTruncate = Enum.TextTruncate.AtEnd,
     }))
 
@@ -1382,23 +1375,42 @@ function Window:_tabButton(tab)
     end)
 
     tab.Button = root
-    tab.Rail = rail
-    tab.Badge = badge
     tab.Label = label
 end
 
 function Window:AddTab(config)
     config = config or {}
 
-    local page = scroll(self.PageHost)
+    local page = create("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.fromScale(1, 1),
+        Parent = self.PageHost,
+    })
     page.Visible = false
     page.Position = UDim2.fromOffset(12, 0)
+
+    local leftColumn = nil
+    local rightColumn = nil
+
+    if config.Full ~= true then
+        leftColumn = scroll(page)
+        leftColumn.Position = UDim2.fromOffset(0, 0)
+        leftColumn.Size = UDim2.new(0.5, -5, 1, 0)
+
+        rightColumn = scroll(page)
+        rightColumn.Position = UDim2.new(0.5, 5, 0, 0)
+        rightColumn.Size = UDim2.new(0.5, -5, 1, 0)
+    end
 
     local tab = setmetatable({
         Window = self,
         Title = config.Title or "Tab",
         Internal = config.Internal == true,
+        Full = config.Full == true,
         Page = page,
+        LeftColumn = leftColumn,
+        RightColumn = rightColumn,
+        NextSectionSide = "Left",
         DefaultSection = nil,
     }, Tab)
 
@@ -1433,18 +1445,22 @@ function Window:SelectTab(tab)
         end
 
         tween(item.Button, {
-            BackgroundColor3 = selected and Tokens.Color.CardHover or Tokens.Color.Card,
-            BackgroundTransparency = selected and 0.03 or 1,
+            BackgroundColor3 = selected and Tokens.Color.PanelRaised or Tokens.Color.Card,
         }, Tokens.Motion.Fast)
-        tween(item.Rail, { BackgroundTransparency = selected and 0 or 1 }, Tokens.Motion.Fast)
 
         item.Label.TextColor3 = selected and Tokens.Color.Text or Tokens.Color.TextMuted
-        item.Badge.TextColor3 = selected and Tokens.Color.BlackText or Tokens.Color.TextFaint
-        item.Badge.BackgroundColor3 = selected and Tokens.Color.Blue or Tokens.Color.PanelRaised
+
+        local border = item.Button:FindFirstChildOfClass("UIStroke")
+        if border then
+            tween(border, {
+                Color = selected and Tokens.Color.BorderHot or Tokens.Color.BorderSoft,
+                Transparency = selected and 0 or 0.25,
+            }, Tokens.Motion.Fast)
+        end
     end
 
     self.ActiveTab = tab
-    self.ActiveLabel.Text = "ACTIVE  " .. string.upper(tab.Title)
+    self.ActiveLabel.Text = string.upper(tab.Title)
 end
 
 function Window:_logRow(entry)
@@ -1530,7 +1546,7 @@ function Window:_refreshLogs()
 end
 
 function Window:_buildLogTab()
-    local tab = self:AddTab({ Title = "Logs", Internal = true })
+    local tab = self:AddTab({ Title = "Logs", Internal = true, Full = true })
     self.LogTab = tab
 
     local toolbar = create("Frame", {
@@ -1555,7 +1571,7 @@ function Window:_buildLogTab()
         TextColor3 = Tokens.Color.Text,
         PlaceholderColor3 = Tokens.Color.TextFaint,
         TextSize = 12,
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
@@ -1573,7 +1589,7 @@ function Window:_buildLogTab()
         Text = "AUTO",
         TextColor3 = Tokens.Color.BlackText,
         TextSize = 11,
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Code,
         Position = UDim2.new(1, -250, 0, 30),
         Size = UDim2.fromOffset(62, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1583,7 +1599,7 @@ function Window:_buildLogTab()
         Text = "COPY",
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Code,
         Position = UDim2.new(1, -180, 0, 30),
         Size = UDim2.fromOffset(78, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1593,7 +1609,7 @@ function Window:_buildLogTab()
         Text = "CLEAR",
         TextColor3 = Tokens.Color.Text,
         TextSize = 11,
-        Font = Enum.Font.GothamBold,
+        Font = Enum.Font.Code,
         Position = UDim2.new(1, -94, 0, 30),
         Size = UDim2.fromOffset(94, 32),
     }, { corner(Tokens.Radius.Md) })
@@ -1614,7 +1630,7 @@ function Window:_buildLogTab()
             Text = style.Label,
             TextColor3 = Tokens.Color.BlackText,
             TextSize = 10,
-            Font = Enum.Font.GothamBold,
+            Font = Enum.Font.Code,
             Size = UDim2.fromOffset(58, 26),
         }, { corner(Tokens.Radius.Sm) })
 
@@ -1627,6 +1643,7 @@ function Window:_buildLogTab()
     end
 
     local logList = scroll(tab.Page)
+    logList.Position = UDim2.fromOffset(0, 118)
     logList.Size = UDim2.new(1, 0, 1, -118)
     self.LogList = logList
 
@@ -1830,8 +1847,11 @@ end
 function Window:SetMinimized(value)
     self.Minimized = value == true
     self.Body.Visible = not self.Minimized
+    if self.Sidebar then
+        self.Sidebar.Visible = not self.Minimized
+    end
     self.MinimizeButton.Text = self.Minimized and "+" or "-"
-    tween(self.Root, { Size = self.Minimized and UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 84) or self.Size }, Tokens.Motion.Base)
+    tween(self.Root, { Size = self.Minimized and UDim2.new(self.Size.X.Scale, self.Size.X.Offset, 0, 54) or self.Size }, Tokens.Motion.Base)
 end
 
 function Window:Toggle()
@@ -2046,13 +2066,12 @@ local function buildWindow(config)
 
     local maid = Maid.new()
     local console = Console.new(config.ConsoleLoading)
-    local tabWidth = tonumber(config.TabWidth) or 194
-    local size = config.Size or UDim2.fromOffset(860, 580)
+    local size = config.Size or UDim2.fromOffset(650, 590)
 
     local root = create("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Tokens.Color.Shell,
-        BackgroundTransparency = 0.01,
+        BackgroundTransparency = 0,
         BorderSizePixel = 0,
         GroupTransparency = 0,
         Position = UDim2.fromScale(0.5, 0.54),
@@ -2060,7 +2079,7 @@ local function buildWindow(config)
         Parent = gui,
     }, {
         corner(Tokens.Radius.Xl),
-        stroke(Tokens.Color.BorderHot, 0.14, 1),
+        stroke(Tokens.Color.BorderHot, 0.04, 1),
         gradient({ Tokens.Color.ShellTop, Tokens.Color.ShellBottom }, 90),
     })
 
@@ -2071,82 +2090,81 @@ local function buildWindow(config)
 
     local header = create("Frame", {
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 96),
+        Size = UDim2.new(1, 0, 0, 52),
         Parent = root,
     })
 
     create("Frame", {
-        BackgroundColor3 = Tokens.Color.Violet,
+        BackgroundColor3 = Tokens.Color.Blue,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(18, 0),
-        Size = UDim2.new(1, -36, 0, 3),
+        Position = UDim2.fromOffset(1, 1),
+        Size = UDim2.new(1, -2, 0, 2),
         Parent = header,
     }, {
         corner(2),
-        gradient({ Tokens.Color.Violet, Tokens.Color.Blue, Tokens.Color.Gold }, 0),
+        gradient({ Tokens.Color.Blue, Tokens.Color.Violet }, 0),
     })
 
     local brand = create("Frame", {
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(20, 22),
-        Size = UDim2.fromOffset(50, 50),
+        Position = UDim2.fromOffset(10, 13),
+        Size = UDim2.fromOffset(28, 28),
         Parent = header,
     }, {
         corner(Tokens.Radius.Lg),
-        stroke(Tokens.Color.BorderHot, 0.18, 1),
-        gradient({ Tokens.Color.Violet, Tokens.Color.BlueDim }, 45),
+        stroke(Tokens.Color.Border, 0.05, 1),
     })
 
-    text(brand, merge(textBase("LP", 14, Tokens.Color.Text, true), {
+    text(brand, merge(textBase("LP", 12, Tokens.Color.BlueSoft, true), {
         Size = UDim2.fromScale(1, 1),
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
 
     local title = text(header, merge(textBase(config.Title or Larpter.Name, 17, Tokens.Color.Text, true), {
-        Position = UDim2.fromOffset(84, 21),
-        Size = UDim2.new(1, -470, 0, 24),
+        Position = UDim2.fromOffset(48, 9),
+        Size = UDim2.new(1, -310, 0, 20),
     }))
 
-    local subtitle = text(header, merge(textBase(config.Subtitle or "Prism steel control deck", 12, Tokens.Color.TextMuted), {
-        Position = UDim2.fromOffset(84, 48),
-        Size = UDim2.new(1, -470, 0, 18),
+    local subtitle = text(header, merge(textBase(config.Subtitle or "Linoria-style control surface", 11, Tokens.Color.TextFaint), {
+        Position = UDim2.fromOffset(48, 28),
+        Size = UDim2.new(1, -310, 0, 16),
     }))
 
     local activeLabel = text(header, merge(textBase("ACTIVE", 11, Tokens.Color.TextMuted, true), {
         BackgroundColor3 = Tokens.Color.PanelRaised,
         BackgroundTransparency = 0.05,
-        Position = UDim2.new(1, -324, 0, 25),
-        Size = UDim2.fromOffset(184, 30),
+        Position = UDim2.new(1, -214, 0, 12),
+        Size = UDim2.fromOffset(112, 24),
         TextXAlignment = Enum.TextXAlignment.Center,
     }))
-    corner(15).Parent = activeLabel
-    stroke(Tokens.Color.Border, 0.3, 1).Parent = activeLabel
+    corner(Tokens.Radius.Sm).Parent = activeLabel
+    stroke(Tokens.Color.Border, 0.18, 1).Parent = activeLabel
 
     local statusBar = create("Frame", {
         BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
-        Position = UDim2.new(1, -324, 0, 60),
-        Size = UDim2.fromOffset(184, 17),
+        Position = UDim2.new(1, -214, 0, 37),
+        Size = UDim2.fromOffset(112, 11),
         Parent = header,
     }, {
-        corner(9),
-        stroke(Tokens.Color.BorderSoft, 0.38, 1),
+        corner(Tokens.Radius.Sm),
+        stroke(Tokens.Color.BorderSoft, 0.32, 1),
     })
 
     local statusDot = create("Frame", {
         BackgroundColor3 = Tokens.Color.Mint,
         BorderSizePixel = 0,
-        Position = UDim2.fromOffset(10, 5),
-        Size = UDim2.fromOffset(7, 7),
+        Position = UDim2.fromOffset(6, 3),
+        Size = UDim2.fromOffset(5, 5),
         Parent = statusBar,
     }, {
-        corner(4),
+        corner(3),
     })
 
-    local statusLabel = text(statusBar, merge(textBase("READY", 10, Tokens.Color.TextMuted, true), {
-        Position = UDim2.fromOffset(24, 0),
-        Size = UDim2.new(1, -32, 1, 0),
+    local statusLabel = text(statusBar, merge(textBase("READY", 9, Tokens.Color.TextMuted, true), {
+        Position = UDim2.fromOffset(15, -1),
+        Size = UDim2.new(1, -18, 1, 2),
         TextTruncate = Enum.TextTruncate.AtEnd,
     }))
 
@@ -2154,10 +2172,10 @@ local function buildWindow(config)
         BackgroundColor3 = Tokens.Color.PanelRaised,
         Text = "-",
         TextColor3 = Tokens.Color.Text,
-        TextSize = 16,
-        Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -92, 0, 25),
-        Size = UDim2.fromOffset(34, 30),
+        TextSize = 14,
+        Font = Enum.Font.Code,
+        Position = UDim2.new(1, -76, 0, 13),
+        Size = UDim2.fromOffset(28, 24),
     }, { corner(Tokens.Radius.Md) })
 
     local close = button(header, {
@@ -2165,65 +2183,46 @@ local function buildWindow(config)
         Text = "X",
         TextColor3 = Tokens.Color.Text,
         TextSize = 12,
-        Font = Enum.Font.GothamBold,
-        Position = UDim2.new(1, -48, 0, 25),
-        Size = UDim2.fromOffset(34, 30),
+        Font = Enum.Font.Code,
+        Position = UDim2.new(1, -40, 0, 13),
+        Size = UDim2.fromOffset(28, 24),
     }, { corner(Tokens.Radius.Md) })
 
-    local body = create("Frame", {
-        BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(16, 104),
-        Size = UDim2.new(1, -32, 1, -120),
-        Parent = root,
-    })
-
-    local sidebar = create("Frame", {
+    local tabBar = create("Frame", {
         BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
-        Size = UDim2.new(0, tabWidth, 1, 0),
-        Parent = body,
+        Position = UDim2.fromOffset(8, 56),
+        Size = UDim2.new(1, -16, 0, 32),
+        Parent = root,
     }, {
         corner(Tokens.Radius.Lg),
-        stroke(Tokens.Color.BorderSoft, 0.2, 1),
-        padding(11, 11, 11, 11),
-        gradient({ Tokens.Color.Panel, Tokens.Color.PanelSunken }, 90),
+        stroke(Tokens.Color.BorderSoft, 0.18, 1),
+        padding(5, 4, 5, 4),
     })
-
-    text(sidebar, merge(textBase("COMMANDS", 10, Tokens.Color.TextFaint, true), {
-        Size = UDim2.new(1, 0, 0, 18),
-    }))
 
     local tabList = create("Frame", {
         BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(0, 26),
-        Size = UDim2.new(1, 0, 1, -54),
-        Parent = sidebar,
+        Size = UDim2.fromScale(1, 1),
+        Parent = tabBar,
     }, {
-        list(Enum.FillDirection.Vertical, 7),
+        list(Enum.FillDirection.Horizontal, 5),
     })
-
-    text(sidebar, merge(textBase("LARPTER UI  /  v" .. Larpter.Version, 10, Tokens.Color.TextFaint, true), {
-        Position = UDim2.new(0, 0, 1, -22),
-        Size = UDim2.new(1, 0, 0, 20),
-        TextXAlignment = Enum.TextXAlignment.Center,
-    }))
 
     local contentPanel = create("Frame", {
         BackgroundColor3 = Tokens.Color.PanelSunken,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, tabWidth + 14, 0, 0),
-        Size = UDim2.new(1, -tabWidth - 14, 1, 0),
-        Parent = body,
+        Position = UDim2.fromOffset(8, 94),
+        Size = UDim2.new(1, -16, 1, -102),
+        Parent = root,
     }, {
         corner(Tokens.Radius.Lg),
-        stroke(Tokens.Color.BorderSoft, 0.22, 1),
-        gradient({ Tokens.Color.Panel, Tokens.Color.PanelSunken }, 90),
+        stroke(Tokens.Color.Border, 0.14, 1),
     })
 
     local pageHost = create("Frame", {
         BackgroundTransparency = 1,
-        Position = UDim2.fromOffset(12, 12),
-        Size = UDim2.new(1, -24, 1, -24),
+        Position = UDim2.fromOffset(8, 8),
+        Size = UDim2.new(1, -16, 1, -16),
         Parent = contentPanel,
     })
 
@@ -2245,8 +2244,8 @@ local function buildWindow(config)
         Root = root,
         RootScale = rootScale,
         Header = header,
-        Body = body,
-        Sidebar = sidebar,
+        Body = contentPanel,
+        Sidebar = tabBar,
         ContentPanel = contentPanel,
         TabList = tabList,
         PageHost = pageHost,
@@ -2509,7 +2508,7 @@ end
 function Larpter:CreateDemo(config)
     config = merge({
         Title = "LARPTER Premium",
-        Subtitle = "Prism steel Roblox control deck",
+        Subtitle = "Linoria-inspired control surface",
         MaxLogs = 200,
     }, config or {})
 
@@ -2524,8 +2523,8 @@ function Larpter:CreateDemo(config)
     local dashboard = window:AddTab({ Title = "Dashboard" })
     local overview = dashboard:AddSection("Overview")
     overview:AddParagraph({
-        Title = "Production rebuild",
-        Content = "New prism steel shell, animated console boot, duplicate guard, and a log-first workflow.",
+        Title = "Linoria-inspired rebuild",
+        Content = "Compact top tabs, two-column groupboxes, animated boot, duplicate guard, and a log-first workflow.",
     })
     overview:AddDivider({ Title = "Runtime" })
     overview:AddParagraph({
