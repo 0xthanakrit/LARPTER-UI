@@ -17,65 +17,51 @@ local OPTIONS = {
     MaxLogs = 250,
 }
 
-local BOOT_SESSION = string.format("%04X", math.random(0, 65535))
 local BOOT_STARTED = os.clock()
 
-local function bootBar(progress)
-    local width = 20
-    local filled = math.floor(progress * width + 0.5)
-    return string.rep("#", filled) .. string.rep(".", width - filled)
-end
-
-local function bootLog(progress, message)
+local function bootLog(message)
     if OPTIONS.ConsoleLoading == false or OPTIONS.ConsoleLoading == "silent" then
         return
     end
 
-    progress = math.max(0, math.min(1, tonumber(progress) or 0))
-    print(string.format(
-        "[LARPTER Loader:%s] %3d%% [%s] %s",
-        BOOT_SESSION,
-        math.floor(progress * 100 + 0.5),
-        bootBar(progress),
-        tostring(message or "Loading")
-    ))
+    print("[LARPTER Loader] " .. tostring(message or "Loading"))
 end
 
-bootLog(0.02, "requesting library")
+bootLog("requesting library")
 
 local okSource, source = pcall(function()
     return game:HttpGet(LIBRARY_URL)
 end)
 
 if not okSource then
-    bootLog(1, "download failed")
+    bootLog("download failed")
     error("[LARPTER Loader] Failed to download library: " .. tostring(source), 2)
 end
 
-bootLog(0.24, "library downloaded")
+bootLog("library downloaded")
 
 local chunk, compileError = loadstring(source)
 
 if not chunk then
-    bootLog(1, "compile failed")
+    bootLog("compile failed")
     error("[LARPTER Loader] Failed to compile library: " .. tostring(compileError), 2)
 end
 
-bootLog(0.42, "library compiled")
+bootLog("library compiled")
 
 local okLibrary, Larpter = pcall(chunk)
 
 if not okLibrary then
-    bootLog(1, "library runtime failed")
+    bootLog("library runtime failed")
     error("[LARPTER Loader] Library runtime error: " .. tostring(Larpter), 2)
 end
 
 if type(Larpter) ~= "table" or type(Larpter.CreateDemo) ~= "function" then
-    bootLog(1, "invalid library")
+    bootLog("invalid library")
     error("[LARPTER Loader] Invalid library response", 2)
 end
 
-bootLog(0.58, "mounting ui")
+bootLog("mounting ui")
 
 local Window = Larpter:CreateDemo(OPTIONS)
 
@@ -84,6 +70,6 @@ Window:Info("Loaded from GitHub", {
     version = Larpter.Version or "unknown",
 })
 
-bootLog(1, string.format("ready in %.1fs", os.clock() - BOOT_STARTED))
+bootLog(string.format("ready in %.1fs", os.clock() - BOOT_STARTED))
 
 return Window

@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 5.1.0
+    Version 5.1.1
 
     Production-oriented single-file Roblox UI framework:
     - Linoria-inspired compact control surface
@@ -13,7 +13,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "5.1.0",
+    Version = "5.1.1",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE"
@@ -35,30 +35,30 @@ local LocalPlayer = Players.LocalPlayer
 
 local Tokens = {
     Color = {
-        Shell = Color3.fromRGB(31, 34, 41),
-        ShellTop = Color3.fromRGB(41, 45, 54),
-        ShellBottom = Color3.fromRGB(25, 28, 34),
-        Panel = Color3.fromRGB(35, 38, 46),
-        PanelRaised = Color3.fromRGB(44, 48, 58),
-        PanelSunken = Color3.fromRGB(27, 30, 36),
-        Card = Color3.fromRGB(39, 43, 52),
-        CardHover = Color3.fromRGB(50, 55, 66),
-        Border = Color3.fromRGB(74, 80, 94),
-        BorderSoft = Color3.fromRGB(55, 60, 72),
-        BorderHot = Color3.fromRGB(117, 145, 255),
-        Blue = Color3.fromRGB(92, 125, 255),
-        BlueSoft = Color3.fromRGB(157, 177, 255),
-        BlueDim = Color3.fromRGB(49, 69, 135),
-        Mint = Color3.fromRGB(88, 212, 172),
-        Gold = Color3.fromRGB(234, 184, 98),
-        Rose = Color3.fromRGB(239, 93, 128),
-        Text = Color3.fromRGB(236, 240, 248),
-        TextMuted = Color3.fromRGB(196, 205, 222),
-        TextFaint = Color3.fromRGB(139, 150, 171),
-        BlackText = Color3.fromRGB(16, 19, 25),
-        Red = Color3.fromRGB(239, 93, 128),
-        Amber = Color3.fromRGB(234, 184, 98),
-        Violet = Color3.fromRGB(172, 153, 255),
+        Shell = Color3.fromRGB(58, 62, 73),
+        ShellTop = Color3.fromRGB(72, 78, 91),
+        ShellBottom = Color3.fromRGB(50, 54, 65),
+        Panel = Color3.fromRGB(62, 67, 80),
+        PanelRaised = Color3.fromRGB(78, 84, 99),
+        PanelSunken = Color3.fromRGB(49, 54, 66),
+        Card = Color3.fromRGB(68, 74, 88),
+        CardHover = Color3.fromRGB(86, 94, 111),
+        Border = Color3.fromRGB(124, 137, 160),
+        BorderSoft = Color3.fromRGB(94, 106, 128),
+        BorderHot = Color3.fromRGB(130, 162, 255),
+        Blue = Color3.fromRGB(103, 146, 255),
+        BlueSoft = Color3.fromRGB(194, 209, 255),
+        BlueDim = Color3.fromRGB(77, 103, 184),
+        Mint = Color3.fromRGB(104, 230, 186),
+        Gold = Color3.fromRGB(246, 198, 112),
+        Rose = Color3.fromRGB(250, 105, 141),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextMuted = Color3.fromRGB(232, 238, 247),
+        TextFaint = Color3.fromRGB(190, 201, 218),
+        BlackText = Color3.fromRGB(17, 22, 32),
+        Red = Color3.fromRGB(250, 105, 141),
+        Amber = Color3.fromRGB(246, 198, 112),
+        Violet = Color3.fromRGB(191, 176, 255),
     },
     Radius = {
         Sm = 2,
@@ -347,6 +347,8 @@ local function textBase(text, size, color, bold)
         Font = Enum.Font.Code,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Center,
+        TextStrokeColor3 = Color3.fromRGB(4, 6, 10),
+        TextStrokeTransparency = 0.82,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
     }
@@ -429,6 +431,7 @@ function Console.new(option)
         LastLength = 0,
         LastBucket = nil,
         LastMessage = nil,
+        LastPercent = 0,
         PrintedStart = false,
         SpinnerIndex = 0,
     }, Console)
@@ -457,12 +460,11 @@ function Console:_line(progress, message)
     )
 end
 
-function Console:_developerLine(progress, message)
-    local percent = math.floor(progress * 100 + 0.5)
+function Console:_developerLine(percent, message)
     return string.format(
         "[LARPTER] %3d%% [%s] %s",
         percent,
-        self:_bar(progress),
+        self:_bar(percent / 100),
         message or "Loading"
     )
 end
@@ -502,16 +504,18 @@ function Console:Progress(progress, message, force)
             print(string.format("[LARPTER] boot session %s started", self.Session))
         end
 
-        local bucket = math.floor(progress * 8)
-        local shouldPrint = force or progress >= 1 or message ~= self.LastMessage or bucket ~= self.LastBucket
+        local targetPercent = clamp(math.floor(progress * 100 + 0.5), 0, 100)
+        local startPercent = math.max(self.LastPercent + 1, 1)
 
-        if shouldPrint then
-            print(self:_developerLine(progress, message))
-            self.LastBucket = bucket
-            self.LastMessage = message
+        for percent = startPercent, targetPercent do
+            print(self:_developerLine(percent, message))
         end
 
-        if progress >= 1 or force == "done" then
+        self.LastPercent = math.max(self.LastPercent, targetPercent)
+        self.LastMessage = message
+
+        if (progress >= 1 or force == "done") and not self.PrintedDone then
+            self.PrintedDone = true
             print(string.format("[LARPTER] ready in %.1fs", os.clock() - self.StartedAt))
         end
 
