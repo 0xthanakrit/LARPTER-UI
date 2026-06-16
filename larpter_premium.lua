@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 7.2.0
+    Version 7.3.0
 
     Clean minimal Roblox UI library:
     - window, tabs, sections, controls
@@ -12,7 +12,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "7.2.0",
+    Version = "7.3.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE_V7"
@@ -52,6 +52,95 @@ local Theme = {
     Red = Color3.fromRGB(239, 68, 68),
     Purple = Color3.fromRGB(124, 58, 237),
 }
+
+local ThemePresets = {
+    Minimal = {
+        Shell = Color3.fromRGB(230, 236, 245),
+        Surface = Color3.fromRGB(247, 249, 252),
+        SurfaceHigh = Color3.fromRGB(255, 255, 255),
+        SurfaceLow = Color3.fromRGB(218, 226, 237),
+        Card = Color3.fromRGB(255, 255, 255),
+        CardHover = Color3.fromRGB(241, 246, 253),
+        Stroke = Color3.fromRGB(198, 209, 223),
+        StrokeSoft = Color3.fromRGB(222, 230, 240),
+        Accent = Color3.fromRGB(37, 99, 235),
+        AccentHover = Color3.fromRGB(29, 78, 216),
+        AccentSoft = Color3.fromRGB(219, 234, 254),
+        Text = Color3.fromRGB(15, 23, 42),
+        TextMuted = Color3.fromRGB(71, 85, 105),
+        TextFaint = Color3.fromRGB(100, 116, 139),
+        White = Color3.fromRGB(255, 255, 255),
+        Green = Color3.fromRGB(16, 185, 129),
+        Amber = Color3.fromRGB(245, 158, 11),
+        Red = Color3.fromRGB(239, 68, 68),
+        Purple = Color3.fromRGB(124, 58, 237),
+    },
+    Slate = {
+        Shell = Color3.fromRGB(211, 218, 230),
+        Surface = Color3.fromRGB(235, 239, 245),
+        SurfaceHigh = Color3.fromRGB(250, 252, 255),
+        SurfaceLow = Color3.fromRGB(197, 207, 221),
+        Card = Color3.fromRGB(250, 252, 255),
+        CardHover = Color3.fromRGB(230, 236, 245),
+        Stroke = Color3.fromRGB(169, 184, 205),
+        StrokeSoft = Color3.fromRGB(205, 214, 228),
+        Accent = Color3.fromRGB(51, 86, 145),
+        AccentHover = Color3.fromRGB(37, 65, 116),
+        AccentSoft = Color3.fromRGB(219, 228, 242),
+        Text = Color3.fromRGB(17, 24, 39),
+        TextMuted = Color3.fromRGB(75, 85, 99),
+        TextFaint = Color3.fromRGB(107, 114, 128),
+        White = Color3.fromRGB(255, 255, 255),
+        Green = Color3.fromRGB(20, 184, 166),
+        Amber = Color3.fromRGB(217, 119, 6),
+        Red = Color3.fromRGB(220, 38, 38),
+        Purple = Color3.fromRGB(109, 40, 217),
+    },
+    Dark = {
+        Shell = Color3.fromRGB(32, 40, 52),
+        Surface = Color3.fromRGB(40, 50, 64),
+        SurfaceHigh = Color3.fromRGB(51, 63, 80),
+        SurfaceLow = Color3.fromRGB(25, 32, 43),
+        Card = Color3.fromRGB(55, 68, 86),
+        CardHover = Color3.fromRGB(66, 82, 104),
+        Stroke = Color3.fromRGB(92, 110, 135),
+        StrokeSoft = Color3.fromRGB(70, 86, 110),
+        Accent = Color3.fromRGB(96, 165, 250),
+        AccentHover = Color3.fromRGB(59, 130, 246),
+        AccentSoft = Color3.fromRGB(30, 58, 95),
+        Text = Color3.fromRGB(248, 250, 252),
+        TextMuted = Color3.fromRGB(226, 232, 240),
+        TextFaint = Color3.fromRGB(203, 213, 225),
+        White = Color3.fromRGB(255, 255, 255),
+        Green = Color3.fromRGB(52, 211, 153),
+        Amber = Color3.fromRGB(251, 191, 36),
+        Red = Color3.fromRGB(248, 113, 113),
+        Purple = Color3.fromRGB(167, 139, 250),
+    },
+    Ocean = {
+        Shell = Color3.fromRGB(220, 241, 246),
+        Surface = Color3.fromRGB(239, 249, 251),
+        SurfaceHigh = Color3.fromRGB(255, 255, 255),
+        SurfaceLow = Color3.fromRGB(191, 222, 232),
+        Card = Color3.fromRGB(255, 255, 255),
+        CardHover = Color3.fromRGB(229, 246, 250),
+        Stroke = Color3.fromRGB(151, 190, 207),
+        StrokeSoft = Color3.fromRGB(200, 224, 233),
+        Accent = Color3.fromRGB(8, 145, 178),
+        AccentHover = Color3.fromRGB(14, 116, 144),
+        AccentSoft = Color3.fromRGB(207, 250, 254),
+        Text = Color3.fromRGB(15, 23, 42),
+        TextMuted = Color3.fromRGB(51, 65, 85),
+        TextFaint = Color3.fromRGB(100, 116, 139),
+        White = Color3.fromRGB(255, 255, 255),
+        Green = Color3.fromRGB(5, 150, 105),
+        Amber = Color3.fromRGB(217, 119, 6),
+        Red = Color3.fromRGB(225, 29, 72),
+        Purple = Color3.fromRGB(124, 58, 237),
+    },
+}
+
+Larpter.Themes = ThemePresets
 
 local Radius = {
     Sm = 6,
@@ -407,6 +496,20 @@ local function f9LogLine(prefix, entry)
 end
 
 local function applyTheme(theme)
+    if type(theme) == "string" then
+        local requested = theme
+        theme = ThemePresets[requested]
+
+        if not theme then
+            for name, preset in pairs(ThemePresets) do
+                if string.lower(name) == string.lower(requested) then
+                    theme = preset
+                    break
+                end
+            end
+        end
+    end
+
     if type(theme) ~= "table" then
         return
     end
@@ -770,6 +873,54 @@ function Section:AddParagraph(config)
     end
 
     return object
+end
+
+function Section:AddLabel(config)
+    config = type(config) == "table" and config or { Text = config }
+
+    local root = create("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, tonumber(config.Height) or 24),
+        Parent = self.Content,
+    })
+
+    local label = text(root, merge(textBase(config.Text or config.Title or "Label", config.TextSize or 13, config.Color or Theme.TextMuted, config.Bold == true), {
+        Size = UDim2.fromScale(1, 1),
+        TextWrapped = config.Wrapped == true,
+        TextTruncate = config.Wrapped == true and Enum.TextTruncate.None or Enum.TextTruncate.AtEnd,
+    }))
+
+    local object = {
+        Root = root,
+        Label = label,
+    }
+
+    function object:SetText(value)
+        self.Label.Text = asString(value)
+    end
+
+    function object:Destroy()
+        self.Root:Destroy()
+    end
+
+    return object
+end
+
+function Section:AddSpace(config)
+    config = type(config) == "table" and config or { Height = config }
+
+    local root = create("Frame", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, tonumber(config.Height) or 8),
+        Parent = self.Content,
+    })
+
+    return {
+        Root = root,
+        Destroy = function(self)
+            self.Root:Destroy()
+        end,
+    }
 end
 
 function Section:AddDivider(config)
@@ -1370,6 +1521,8 @@ end
 
 for _, method in ipairs({
     "AddParagraph",
+    "AddLabel",
+    "AddSpace",
     "AddDivider",
     "AddButton",
     "AddToggle",
@@ -1879,6 +2032,44 @@ function Window:CopyLatestLog()
     if type(setclipboard) == "function" then
         setclipboard(output)
         self:Success("Latest log copied")
+        return true
+    end
+
+    self:Warn("Clipboard API unavailable")
+    return false
+end
+
+function Window:ExportLogs(level)
+    local rows = {}
+    local wanted = level and string.lower(asString(level)) or nil
+
+    for _, entry in ipairs(self.LogEntries) do
+        if not wanted or entry.Level == wanted then
+            local line = string.format("[%s] [%s] %s", entry.Time, string.upper(entry.Level), entry.Message)
+            local meta = metaString(entry.Meta)
+
+            if meta ~= "" then
+                line = line .. " | " .. meta
+            end
+
+            rows[#rows + 1] = line
+        end
+    end
+
+    return table.concat(rows, "\n")
+end
+
+function Window:CopyLogs(level)
+    local output = self:ExportLogs(level)
+
+    if output == "" then
+        self:Warn("No logs to copy")
+        return false
+    end
+
+    if type(setclipboard) == "function" then
+        setclipboard(output)
+        self:Success("Logs copied", { level = level or "all" })
         return true
     end
 
@@ -2582,8 +2773,23 @@ function Larpter:SetTheme(theme)
     return self
 end
 
+function Larpter:UseTheme(theme)
+    return self:SetTheme(theme)
+end
+
 function Larpter:GetTheme()
     return merge({}, Theme)
+end
+
+function Larpter:ListThemes()
+    local names = {}
+
+    for name in pairs(ThemePresets) do
+        names[#names + 1] = name
+    end
+
+    table.sort(names)
+    return names
 end
 
 local function windowConfig(config)
@@ -2644,6 +2850,44 @@ end
 
 function Window:Logs()
     return self:ShowLogs()
+end
+
+function Window:Show()
+    self.Root.Visible = true
+    return self
+end
+
+function Window:Hide()
+    self.Root.Visible = false
+    return self
+end
+
+function Window:Close()
+    self:Destroy()
+end
+
+function Window:N(title, content, level)
+    if type(title) == "table" then
+        return self:Notify(title)
+    end
+
+    return self:Notify({
+        Title = asString(title ~= nil and title or self.Title),
+        Content = asString(content),
+        Level = level or "info",
+    })
+end
+
+function Window:Export(level)
+    return self:ExportLogs(level)
+end
+
+function Window:CopyAll(level)
+    return self:CopyLogs(level)
+end
+
+function Window:CopyLast()
+    return self:CopyLatestLog()
 end
 
 function Window:F9(enabled)
@@ -2807,6 +3051,29 @@ function Section:Note(title, content)
     return self:Paragraph(title, content)
 end
 
+function Section:Label(value, color)
+    if type(value) == "table" then
+        return self:AddLabel(value)
+    end
+
+    return self:AddLabel({
+        Text = asString(value),
+        Color = color,
+    })
+end
+
+function Section:Lbl(value, color)
+    return self:Label(value, color)
+end
+
+function Section:Space(height)
+    return self:AddSpace(height)
+end
+
+function Section:Gap(height)
+    return self:Space(height)
+end
+
 function Section:Divider(title)
     if type(title) == "table" then
         return self:AddDivider(title)
@@ -2834,6 +3101,10 @@ for _, method in ipairs({
     "Bind",
     "Paragraph",
     "Note",
+    "Label",
+    "Lbl",
+    "Space",
+    "Gap",
     "Divider",
     "Line",
 }) do
@@ -2895,6 +3166,10 @@ function Larpter:Build(spec)
                     section:AddKeybind(item)
                 elseif kind == "paragraph" or kind == "note" then
                     section:AddParagraph(item)
+                elseif kind == "label" or kind == "lbl" then
+                    section:AddLabel(item)
+                elseif kind == "space" or kind == "gap" then
+                    section:AddSpace(item)
                 elseif kind == "divider" or kind == "line" then
                     section:AddDivider(item)
                 end

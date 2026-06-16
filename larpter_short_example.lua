@@ -10,6 +10,7 @@ end
 local UI = Larpter:New({
     Title = "LARPTER Short",
     Subtitle = "Short API example",
+    Theme = "Minimal",
     ConsoleLoading = "developer",
     MinBootTime = 1.5,
     F9Logs = true,
@@ -20,9 +21,12 @@ local Main = UI:Tab("Main")
 local Farm = Main:Sec("Farm")
 
 Farm:Note("Short API", "Use Btn, Tog, Sld, Drop, Box, and Bind for quick UI scripts.")
+Farm:Lbl("Logs are mirrored to F9 Developer Console.")
+Farm:Gap(4)
 
 Farm:Btn("Start", function()
     UI:OK("Start clicked")
+    UI:N("Started", "Notification, UI log, and F9 log are all available.", "success")
     UI:Dev("This line is sent only to F9")
 end)
 
@@ -56,6 +60,10 @@ end)
 
 General:Btn("Open Logs", function()
     UI:Logs()
+end)
+
+General:Btn("Copy All Logs", function()
+    UI:CopyAll()
 end)
 
 General:Line("Builder")
