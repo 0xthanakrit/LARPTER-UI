@@ -15,6 +15,8 @@ local OPTIONS = {
     PreventDuplicate = true,
     ForceReload = false,
     MaxLogs = 250,
+    F9Logs = true,
+    F9LogPrefix = "LARPTER",
 }
 
 local BOOT_STARTED = os.clock()

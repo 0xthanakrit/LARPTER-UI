@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 7.0.0
+    Version 7.2.0
 
     Clean minimal Roblox UI library:
     - window, tabs, sections, controls
@@ -12,7 +12,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "7.0.0",
+    Version = "7.2.0",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE_V7"
@@ -389,6 +389,23 @@ local function metaString(meta)
     return table.concat(out, "  ")
 end
 
+local function f9LogLine(prefix, entry)
+    local meta = metaString(entry.Meta)
+    local line = string.format(
+        "[%s][%s][%s] %s",
+        prefix or "LARPTER",
+        entry.Time or os.date("%H:%M:%S"),
+        string.upper(entry.Level or "info"),
+        asString(entry.Message)
+    )
+
+    if meta ~= "" then
+        line = line .. " | " .. meta
+    end
+
+    return line
+end
+
 local function applyTheme(theme)
     if type(theme) ~= "table" then
         return
@@ -428,6 +445,10 @@ local function normalizeConfig(config)
 
         if config.MaxLogs == nil then
             config.MaxLogs = 250
+        end
+
+        if config.F9Logs == nil and config.DevConsoleLogs == nil and config.MirrorLogsToF9 == nil then
+            config.F9Logs = true
         end
     end
 
@@ -1741,6 +1762,7 @@ function Window:Log(level, message, meta)
         Time = os.date("%H:%M:%S"),
     }
 
+    self:_emitF9Log(entry)
     self.LogEntries[#self.LogEntries + 1] = entry
 
     if self.LogList then
@@ -1757,6 +1779,56 @@ function Window:Log(level, message, meta)
 
     self:_refreshLogs()
     return entry
+end
+
+function Window:_emitF9Log(entry, force)
+    if (self.F9Logs ~= true and force ~= true) or not entry then
+        return
+    end
+
+    local line = f9LogLine(self.F9LogPrefix, entry)
+
+    if entry.Level == "warn" or entry.Level == "error" then
+        warn(line)
+    else
+        print(line)
+    end
+end
+
+function Window:SetF9Logs(enabled)
+    self.F9Logs = enabled ~= false
+
+    if self.F9Logs then
+        self:_emitF9Log({
+            Level = "info",
+            Message = "Developer Console log mirror enabled",
+            Meta = nil,
+            Time = os.date("%H:%M:%S"),
+        })
+    end
+
+    return self
+end
+
+function Window:GetF9Logs()
+    return self.F9Logs == true
+end
+
+function Window:F9Log(level, message, meta)
+    level = string.lower(asString(level ~= nil and level or "info"))
+
+    if not LogLevels[level] then
+        level = "info"
+    end
+
+    self:_emitF9Log({
+        Level = level,
+        Message = asString(message),
+        Meta = meta,
+        Time = os.date("%H:%M:%S"),
+    }, true)
+
+    return self
 end
 
 function Window:Info(message, meta)
@@ -2277,6 +2349,19 @@ local function buildWindow(config)
     notifications.UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 
     local loading = loadingView(root)
+    local f9Logs = config.F9Logs
+
+    if f9Logs == nil then
+        f9Logs = config.DevConsoleLogs
+    end
+
+    if f9Logs == nil then
+        f9Logs = config.MirrorLogsToF9
+    end
+
+    if f9Logs == nil then
+        f9Logs = true
+    end
 
     local window = setmetatable({
         Gui = gui,
@@ -2303,6 +2388,8 @@ local function buildWindow(config)
         Title = config.Title or Larpter.Name,
         Size = size,
         Console = console,
+        F9Logs = f9Logs ~= false,
+        F9LogPrefix = config.F9LogPrefix or "LARPTER",
         Maid = maid,
         MinimizeKey = keyCode(config.MinimizeKey, Enum.KeyCode.RightControl),
         MaxLogs = tonumber(config.MaxLogs) or 250,
@@ -2405,6 +2492,7 @@ local function buildWindow(config)
             duplicateGuard = config.PreventDuplicate ~= false,
             guiParent = config.GuiParent or "Auto",
             console = config.ConsoleLoading or "developer",
+            f9Logs = window.F9Logs,
         })
     end
 
@@ -2496,6 +2584,325 @@ end
 
 function Larpter:GetTheme()
     return merge({}, Theme)
+end
+
+local function windowConfig(config)
+    if type(config) == "string" then
+        return { Title = config }
+    end
+
+    return config or {}
+end
+
+local function titleConfig(title, callback, description)
+    if type(title) == "table" then
+        return title
+    end
+
+    return {
+        Title = asString(title),
+        Description = description,
+        Callback = callback,
+    }
+end
+
+local function tabConfig(config)
+    if type(config) == "string" then
+        return { Title = config }
+    end
+
+    return config or {}
+end
+
+local function sectionConfig(config)
+    if type(config) == "string" then
+        return { Title = config }
+    end
+
+    return config or {}
+end
+
+function Larpter:New(config)
+    return self:CreateWindow(windowConfig(config))
+end
+
+function Larpter:Window(config)
+    return self:CreateWindow(windowConfig(config))
+end
+
+function Larpter:UI(config)
+    return self:CreateWindow(windowConfig(config))
+end
+
+function Larpter:Demo(config)
+    return self:CreateDemo(windowConfig(config))
+end
+
+function Window:Tab(config)
+    return self:AddTab(tabConfig(config))
+end
+
+function Window:Logs()
+    return self:ShowLogs()
+end
+
+function Window:F9(enabled)
+    if enabled == nil then
+        return self:GetF9Logs()
+    end
+
+    return self:SetF9Logs(enabled)
+end
+
+function Window:Dev(message, level, meta)
+    return self:F9Log(level or "info", message, meta)
+end
+
+function Window:I(message, meta)
+    return self:Info(message, meta)
+end
+
+function Window:OK(message, meta)
+    return self:Success(message, meta)
+end
+
+function Window:W(message, meta)
+    return self:Warn(message, meta)
+end
+
+function Window:E(message, meta)
+    return self:Error(message, meta)
+end
+
+function Window:D(message, meta)
+    return self:Debug(message, meta)
+end
+
+function Tab:Section(config)
+    return self:AddSection(sectionConfig(config))
+end
+
+function Tab:Sec(config)
+    return self:AddSection(sectionConfig(config))
+end
+
+function Tab:Group(config)
+    return self:AddSection(sectionConfig(config))
+end
+
+function Section:Button(title, callback, description)
+    return self:AddButton(titleConfig(title, callback, description))
+end
+
+function Section:Btn(title, callback, description)
+    return self:Button(title, callback, description)
+end
+
+function Section:Toggle(title, default, callback, description)
+    if type(title) == "table" then
+        return self:AddToggle(title)
+    end
+
+    if type(default) == "function" then
+        description = callback
+        callback = default
+        default = false
+    end
+
+    return self:AddToggle({
+        Title = asString(title),
+        Description = description,
+        Default = default == true,
+        Callback = callback,
+    })
+end
+
+function Section:Tog(title, default, callback, description)
+    return self:Toggle(title, default, callback, description)
+end
+
+function Section:Slider(title, min, max, default, callback, suffix)
+    if type(title) == "table" then
+        return self:AddSlider(title)
+    end
+
+    return self:AddSlider({
+        Title = asString(title),
+        Min = min,
+        Max = max,
+        Default = default,
+        Suffix = suffix,
+        Callback = callback,
+    })
+end
+
+function Section:Sld(title, min, max, default, callback, suffix)
+    return self:Slider(title, min, max, default, callback, suffix)
+end
+
+function Section:Dropdown(title, values, default, callback, description)
+    if type(title) == "table" then
+        return self:AddDropdown(title)
+    end
+
+    return self:AddDropdown({
+        Title = asString(title),
+        Description = description,
+        Values = values,
+        Default = default,
+        Callback = callback,
+    })
+end
+
+function Section:Drop(title, values, default, callback, description)
+    return self:Dropdown(title, values, default, callback, description)
+end
+
+function Section:Input(title, placeholder, callback, description)
+    if type(title) == "table" then
+        return self:AddInput(title)
+    end
+
+    return self:AddInput({
+        Title = asString(title),
+        Description = description,
+        Placeholder = placeholder,
+        Callback = callback,
+    })
+end
+
+function Section:Box(title, placeholder, callback, description)
+    return self:Input(title, placeholder, callback, description)
+end
+
+function Section:Keybind(title, default, callback, description)
+    if type(title) == "table" then
+        return self:AddKeybind(title)
+    end
+
+    return self:AddKeybind({
+        Title = asString(title),
+        Description = description,
+        Default = default,
+        Callback = callback,
+    })
+end
+
+function Section:Bind(title, default, callback, description)
+    return self:Keybind(title, default, callback, description)
+end
+
+function Section:Paragraph(title, content)
+    if type(title) == "table" then
+        return self:AddParagraph(title)
+    end
+
+    return self:AddParagraph({
+        Title = asString(title),
+        Content = asString(content),
+    })
+end
+
+function Section:Note(title, content)
+    return self:Paragraph(title, content)
+end
+
+function Section:Divider(title)
+    if type(title) == "table" then
+        return self:AddDivider(title)
+    end
+
+    return self:AddDivider({ Title = title })
+end
+
+function Section:Line(title)
+    return self:Divider(title)
+end
+
+for _, method in ipairs({
+    "Button",
+    "Btn",
+    "Toggle",
+    "Tog",
+    "Slider",
+    "Sld",
+    "Dropdown",
+    "Drop",
+    "Input",
+    "Box",
+    "Keybind",
+    "Bind",
+    "Paragraph",
+    "Note",
+    "Divider",
+    "Line",
+}) do
+    Tab[method] = function(self, ...)
+        return Section[method](resolveSection(self), ...)
+    end
+end
+
+function Larpter:Build(spec)
+    spec = spec or {}
+
+    local windowSpec = spec.Window or {
+        Title = spec.Title,
+        Subtitle = spec.Subtitle,
+        Size = spec.Size,
+        Theme = spec.Theme,
+        ConsoleLoading = spec.ConsoleLoading,
+        MinBootTime = spec.MinBootTime,
+        PreventDuplicate = spec.PreventDuplicate,
+        ForceReload = spec.ForceReload,
+        MaxLogs = spec.MaxLogs,
+        F9Logs = spec.F9Logs,
+        DevConsoleLogs = spec.DevConsoleLogs,
+        MirrorLogsToF9 = spec.MirrorLogsToF9,
+        F9LogPrefix = spec.F9LogPrefix,
+    }
+
+    local window = self:CreateWindow(windowSpec)
+
+    for _, tabSpec in ipairs(spec.Tabs or {}) do
+        local tab = window:Tab({
+            Title = tabSpec.Title or tabSpec.Name or tabSpec[1] or "Tab",
+            Full = tabSpec.Full,
+        })
+
+        local sections = tabSpec.Sections or tabSpec.Groups or {}
+
+        for _, groupSpec in ipairs(sections) do
+            local section = tab:Sec({
+                Title = groupSpec.Title or groupSpec.Name or groupSpec[1] or "Section",
+                Side = groupSpec.Side,
+                Badge = groupSpec.Badge,
+            })
+
+            for _, item in ipairs(groupSpec.Items or groupSpec.Controls or {}) do
+                local kind = string.lower(asString(item.Type or item.Kind or item[1] or "button"))
+
+                if kind == "button" or kind == "btn" then
+                    section:AddButton(item)
+                elseif kind == "toggle" or kind == "tog" then
+                    section:AddToggle(item)
+                elseif kind == "slider" or kind == "sld" then
+                    section:AddSlider(item)
+                elseif kind == "dropdown" or kind == "drop" then
+                    section:AddDropdown(item)
+                elseif kind == "input" or kind == "box" then
+                    section:AddInput(item)
+                elseif kind == "keybind" or kind == "bind" then
+                    section:AddKeybind(item)
+                elseif kind == "paragraph" or kind == "note" then
+                    section:AddParagraph(item)
+                elseif kind == "divider" or kind == "line" then
+                    section:AddDivider(item)
+                end
+            end
+        end
+    end
+
+    return window
 end
 
 function Larpter:CreateDemo(config)
