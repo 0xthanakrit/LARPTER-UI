@@ -6,12 +6,12 @@ local LIBRARY_URL = "https://raw.githubusercontent.com/0xthanakrit/LARPTER-UI/ma
 
 local OPTIONS = {
     Title = "LARPTER Premium",
-    Subtitle = "Linoria-inspired control surface",
+    Subtitle = "Minimal UI library",
     SafeMode = true,
     ProtectGui = false,
     GuiParent = "Auto",
     ConsoleLoading = "developer",
-    MinBootTime = 2.8,
+    MinBootTime = 1.8,
     PreventDuplicate = true,
     ForceReload = false,
     MaxLogs = 250,
