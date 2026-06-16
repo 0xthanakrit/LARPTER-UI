@@ -67,6 +67,18 @@ bootLog("mounting ui")
 
 local Window = Larpter:CreateDemo(OPTIONS)
 
+Window.Library = Larpter
+Window.Larpter = Larpter
+Window.New = function(_, config)
+    return Larpter:New(config)
+end
+Window.UI = function(_, config)
+    return Larpter:UI(config)
+end
+Window.Build = function(_, spec)
+    return Larpter:Build(spec)
+end
+
 Window:Info("Loaded from GitHub", {
     source = LIBRARY_URL,
     version = Larpter.Version or "unknown",

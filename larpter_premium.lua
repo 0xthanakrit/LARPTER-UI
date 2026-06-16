@@ -1,6 +1,6 @@
 --[[
     LARPTER Premium UI Framework
-    Version 7.3.0
+    Version 7.3.1
 
     Clean minimal Roblox UI library:
     - window, tabs, sections, controls
@@ -12,7 +12,7 @@
 
 local Larpter = {
     Name = "LARPTER Premium",
-    Version = "7.3.0",
+    Version = "7.3.1",
 }
 
 local STATE_KEY = "__LARPTER_PREMIUM_STATE_V7"
@@ -3292,5 +3292,7 @@ end
 
 local env = getEnv()
 env.LarpterPremium = Larpter
+env.Larpter = Larpter
+env.LP = Larpter
 
 return Larpter

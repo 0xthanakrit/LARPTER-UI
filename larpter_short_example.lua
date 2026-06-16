@@ -1,7 +1,12 @@
 -- LARPTER Premium short API example
 -- Run this after pushing larpter_premium.lua to GitHub.
 
-local Larpter = loadstring(game:HttpGet("https://raw.githubusercontent.com/0xthanakrit/LARPTER-UI/main/larpter_premium.lua"))()
+local source = game:HttpGet("https://raw.githubusercontent.com/0xthanakrit/LARPTER-UI/main/larpter_premium.lua")
+local chunk, compileError = loadstring(source)
+assert(chunk, "LARPTER compile failed: " .. tostring(compileError))
+
+local Larpter = chunk()
+assert(type(Larpter) == "table" and type(Larpter.New) == "function", "LARPTER library did not load. Check the raw GitHub URL and push the latest file.")
 
 if Larpter:IsLoaded() then
     Larpter:DestroyActive()
